@@ -186,6 +186,36 @@ GET  /analytics/pacchetti               → analytics.pacchetti    (admin) — r
 - Export CSV: BOM UTF-8 (`\xEF\xBB\xBF`) per compatibilità Excel italiano.
 - Analytics pacchetti: top 10 per utilizzi + tariffe fuori listino (scostamento > 15% da prezzo listino).
 
+## Route Step 12
+
+```
+GET  /deposito                            → deposito.index              (admin, accettatore) — situazione + accettazione
+GET  /deposito/commessa/{id}              → deposito.commessa           (admin, accettatore) — accettazione da commessa
+GET  /deposito/cambio-stagionale          → deposito.cambio-stagionale  (admin, accettatore) — cambio massivo
+GET  /deposito/report                     → deposito.report             (admin, accettatore, cassa)
+GET  /deposito/etichetta/{pneumatico}     → deposito.etichetta          (admin, accettatore, meccanico) — PDF A6
+POST /deposito/etichette-multiple         → deposito.etichette-multiple (admin, accettatore, meccanico) — PDF multiplo
+GET  /deposito/qr/{codice}                → deposito.qr                 (admin, accettatore, meccanico) — redirect da QR scan
+```
+
+## Note architetturali Step 12
+
+- `Pneumatico`: anagrafica set gomme per veicolo; `codiceEtichetta()` → formato `{prefisso}-{anno}-{id:05d}`.
+- `DepositoPneumatico`: movimenti immutabili (come `MovimentoMagazzino`); traccia azione, ubicazione fisica, usura%.
+- `StagionePneumatico::opposta()`: helper per il cambio stagionale massivo (se monto estivi → cerco invernali in deposito).
+- `EtichettaDepositoService::genera()`: PDF A6 o adesivo (100×50mm) con QR code che encode l'URL `/deposito/qr/{codice}`.
+- `EtichettaDepositoService::generaMultiple()`: PDF A4 multi-etichetta; 4 etichette per pagina.
+- QR scan tablet: il QR dell'etichetta deposito contiene l'URL diretto — funziona con lo stesso scanner Alpine.js già esistente in `BoardMeccanico`.
+- `InviaNotificaCambioStagionale` job: idempotente via `NotificaLog.pneumatico_id` (colonna aggiunta in migration 120004).
+- `CambioStagionaleMassivo::creaAppuntamentiInBlocco()`: distribuisce gli appuntamenti nei 5 giorni lavorativi della settimana selezionata bilanciando il carico (`COUNT` appuntamenti per giorno).
+- Badge menu "Deposito Gomme": count set `in_deposito` da più di 180 giorni — aggiunto in `MenuBadgesController` (`deposito_da_ritirare`).
+- Mappa scaffali `ReportDeposito`: SVG inline generato PHP con regex `([A-Z])(\d+)` sulle ubicazioni; celle rosse = occupato, verdi = libero.
+- Tab "Pneumatici" nel `DettaglioVeicolo`: badge blu con count set in deposito; carica `GestionePneumatici` Livewire.
+- Pulsante "Pneumatici" nel header di `DettaglioCommessa` → `/deposito/commessa/{id}`.
+- Settings aggiunti: `deposito_pneumatici_abilitato`, `etichetta_deposito_prefisso` (DEP), `etichetta_deposito_formato` (A6), `notifica_cambio_stagionale_mese_estivo` (4), `notifica_cambio_stagionale_mese_invernale` (10), `template_email_cambio_stagionale`.
+- PFU (D.Lgs. 152/2006): nella tab smaltimenti del report è visibile l'elenco annuale con promemoria documentazione. Il sistema NON genera automaticamente documenti PFU — è responsabilità dell'officina.
+- `NotificaGenerica` Mailable: mailable senza modello specifico, usa lo stesso template `emails.notifica-commessa`.
+
 ## Route Step 8
 
 ```

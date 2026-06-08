@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AppuntamentiController;
+use App\Http\Controllers\DepositoController;
 use App\Http\Controllers\Api\DviUploadController;
 use App\Http\Controllers\Api\MenuBadgesController;
 use App\Http\Controllers\Api\RisorseAgendaController;
@@ -227,6 +228,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('fatturazione.documenti.zip');
         Route::get('/fatturazione/documenti/{documento}/pdf', [FatturazioneController::class, 'scaricaPdf'])
             ->name('fatturazione.documenti.pdf');
+    });
+
+    // Deposito pneumatici
+    Route::middleware('role:admin|accettatore')->group(function () {
+        Route::get('/deposito', fn() => view('deposito.index'))
+            ->name('deposito.index');
+        Route::get('/deposito/commessa/{commessa}', fn($commessa) => view('deposito.commessa', ['commessaId' => $commessa]))
+            ->name('deposito.commessa');
+        Route::get('/deposito/cambio-stagionale', fn() => view('deposito.cambio-stagionale'))
+            ->name('deposito.cambio-stagionale');
+    });
+
+    Route::middleware('role:admin|accettatore|cassa')->group(function () {
+        Route::get('/deposito/report', fn() => view('deposito.report'))
+            ->name('deposito.report');
+    });
+
+    // Etichette PDF deposito (admin + accettatore + meccanico)
+    Route::middleware('role:admin|accettatore|meccanico')->group(function () {
+        Route::get('/deposito/etichetta/{pneumatico}', [DepositoController::class, 'etichetta'])
+            ->name('deposito.etichetta');
+        Route::post('/deposito/etichette-multiple', [DepositoController::class, 'etichettaMultiple'])
+            ->name('deposito.etichette-multiple');
+        Route::get('/deposito/qr/{codice}', [DepositoController::class, 'cercaQr'])
+            ->name('deposito.qr');
     });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

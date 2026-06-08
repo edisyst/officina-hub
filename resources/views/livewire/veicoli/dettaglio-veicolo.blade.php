@@ -39,54 +39,81 @@
     </div>
 
     <div class="col-md-7">
-      <!-- Storico proprietari -->
-      <div class="card">
-        <div class="card-header"><h3 class="card-title">Storico Proprietari</h3></div>
-        <div class="card-body p-0">
-          <table class="table table-sm mb-0">
-            <thead><tr><th>Cliente</th><th>Dal</th><th>Al</th><th>Stato</th></tr></thead>
-            <tbody>
-              @forelse($proprietari as $p)
-              <tr>
-                <td><a href="{{ route('clienti.show', $p->id) }}">{{ $p->nome_completo }}</a></td>
-                <td>{{ $p->pivot->data_inizio ? \Carbon\Carbon::parse($p->pivot->data_inizio)->format('d/m/Y') : '-' }}</td>
-                <td>{{ $p->pivot->data_fine ? \Carbon\Carbon::parse($p->pivot->data_fine)->format('d/m/Y') : '-' }}</td>
-                <td>
-                  @if($p->pivot->proprietario_attuale)
-                  <span class="badge badge-success">Attuale</span>
-                  @else
-                  <span class="badge badge-secondary">Ex proprietario</span>
-                  @endif
-                </td>
-              </tr>
-              @empty
-              <tr><td colspan="4" class="text-center text-muted">Nessun proprietario registrato.</td></tr>
-              @endforelse
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {{-- Tab navigation --}}
+      <ul class="nav nav-tabs" id="veicoloTabs">
+        <li class="nav-item">
+          <a href="#" wire:click.prevent="$set('tabAttiva', 'storico')"
+             class="nav-link {{ $tabAttiva === 'storico' ? 'active' : '' }}">
+            <i class="fas fa-history mr-1"></i>Storico
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" wire:click.prevent="$set('tabAttiva', 'pneumatici')"
+             class="nav-link {{ $tabAttiva === 'pneumatici' ? 'active' : '' }}">
+            <i class="fas fa-circle-notch mr-1"></i>Pneumatici
+            @if($countPneumaticiDeposito > 0)
+              <span class="badge badge-primary ml-1">{{ $countPneumaticiDeposito }}</span>
+            @endif
+          </a>
+        </li>
+      </ul>
 
-      <!-- Commesse -->
-      <div class="card">
-        <div class="card-header"><h3 class="card-title">Commesse</h3></div>
-        <div class="card-body p-0">
-          <table class="table table-sm mb-0">
-            <thead><tr><th>Numero</th><th>Tipo</th><th>Stato</th><th>Ingresso</th></tr></thead>
-            <tbody>
-              @forelse($commesse as $c)
-              <tr>
-                <td><a href="{{ route('commesse.show', $c->id) }}">{{ $c->numero }}</a></td>
-                <td>{{ $c->tipo->label() }}</td>
-                <td><span class="badge {{ $c->stato->badgeClass() }}">{{ $c->stato->label() }}</span></td>
-                <td>{{ $c->data_ingresso->format('d/m/Y') }}</td>
-              </tr>
-              @empty
-              <tr><td colspan="4" class="text-center text-muted">Nessuna commessa.</td></tr>
-              @endforelse
-            </tbody>
-          </table>
+      <div class="tab-content border border-top-0 p-3 bg-white">
+        @if($tabAttiva === 'storico')
+        {{-- Storico proprietari --}}
+        <div class="card mb-2">
+          <div class="card-header p-2"><h3 class="card-title">Storico Proprietari</h3></div>
+          <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+              <thead><tr><th>Cliente</th><th>Dal</th><th>Al</th><th>Stato</th></tr></thead>
+              <tbody>
+                @forelse($proprietari as $p)
+                <tr>
+                  <td><a href="{{ route('clienti.show', $p->id) }}">{{ $p->nome_completo }}</a></td>
+                  <td>{{ $p->pivot->data_inizio ? \Carbon\Carbon::parse($p->pivot->data_inizio)->format('d/m/Y') : '-' }}</td>
+                  <td>{{ $p->pivot->data_fine ? \Carbon\Carbon::parse($p->pivot->data_fine)->format('d/m/Y') : '-' }}</td>
+                  <td>
+                    @if($p->pivot->proprietario_attuale)
+                    <span class="badge badge-success">Attuale</span>
+                    @else
+                    <span class="badge badge-secondary">Ex proprietario</span>
+                    @endif
+                  </td>
+                </tr>
+                @empty
+                <tr><td colspan="4" class="text-center text-muted">Nessun proprietario registrato.</td></tr>
+                @endforelse
+              </tbody>
+            </table>
+          </div>
         </div>
+
+        {{-- Commesse --}}
+        <div class="card">
+          <div class="card-header p-2"><h3 class="card-title">Commesse</h3></div>
+          <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+              <thead><tr><th>Numero</th><th>Tipo</th><th>Stato</th><th>Ingresso</th></tr></thead>
+              <tbody>
+                @forelse($commesse as $c)
+                <tr>
+                  <td><a href="{{ route('commesse.show', $c->id) }}">{{ $c->numero }}</a></td>
+                  <td>{{ $c->tipo->label() }}</td>
+                  <td><span class="badge {{ $c->stato->badgeClass() }}">{{ $c->stato->label() }}</span></td>
+                  <td>{{ $c->data_ingresso->format('d/m/Y') }}</td>
+                </tr>
+                @empty
+                <tr><td colspan="4" class="text-center text-muted">Nessuna commessa.</td></tr>
+                @endforelse
+              </tbody>
+            </table>
+          </div>
+        </div>
+        @endif
+
+        @if($tabAttiva === 'pneumatici')
+        @livewire('pneumatici.gestione-pneumatici', ['veicoloId' => $veicolo->id], key('pneumatici-' . $veicolo->id))
+        @endif
       </div>
     </div>
   </div>

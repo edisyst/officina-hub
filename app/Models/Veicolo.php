@@ -55,6 +55,11 @@ class Veicolo extends Model
         return $this->hasMany(Commessa::class);
     }
 
+    public function pneumatici()
+    {
+        return $this->hasMany(Pneumatico::class);
+    }
+
     /** Descrizione completa del veicolo */
     public function getDescrizioneAttribute(): string
     {

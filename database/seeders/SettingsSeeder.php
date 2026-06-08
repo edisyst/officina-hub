@@ -101,6 +101,25 @@ class SettingsSeeder extends Seeder
                 '{{NOME_OFFICINA}} — {{TELEFONO_OFFICINA}}',
             ]),
 
+            // Deposito pneumatici
+            'deposito_pneumatici_abilitato'                   => '1',
+            'etichetta_deposito_prefisso'                     => 'DEP',
+            'notifica_cambio_stagionale_mese_estivo'          => '4',
+            'notifica_cambio_stagionale_mese_invernale'       => '10',
+            'etichetta_deposito_formato'                      => 'A6',
+
+            'template_email_cambio_stagionale' => implode("\n", [
+                'Oggetto: È il momento del cambio gomme — {{TARGA}}',
+                '',
+                'Gentile {{NOME_CLIENTE}},',
+                'si avvicina la stagione del cambio pneumatici per il suo veicolo {{TARGA}}.',
+                'Le ricordiamo che presso la nostra officina sono depositati i suoi pneumatici',
+                '{{STAGIONE_DEPOSITO}} ({{MISURA}}).',
+                '',
+                'Chiami o risponda a questa email per fissare un appuntamento.',
+                '{{NOME_OFFICINA}} — {{TELEFONO_OFFICINA}}',
+            ]),
+
             'template_email_richiamo_scadenza' => implode("\n", [
                 'Oggetto: Promemoria {{TIPO_SCADENZA}} — {{TARGA}}',
                 '',

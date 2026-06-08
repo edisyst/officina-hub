@@ -254,6 +254,41 @@
           </li>
           @endhasanyrole
 
+          @hasanyrole('admin|accettatore|cassa')
+          <li class="nav-item has-treeview {{ request()->routeIs('deposito.*') ? 'menu-open' : '' }}">
+            <a href="#" class="nav-link {{ request()->routeIs('deposito.*') ? 'active' : '' }}">
+              <i class="nav-icon fas fa-circle-notch"></i>
+              <p>
+                Deposito Gomme
+                <span id="badge-deposito" class="badge badge-warning right" style="display:none"></span>
+                <i class="fas fa-angle-left right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{{ route('deposito.index') }}" class="nav-link {{ request()->routeIs('deposito.index') || request()->routeIs('deposito.commessa') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Situazione deposito</p>
+                </a>
+              </li>
+              @hasanyrole('admin|accettatore')
+              <li class="nav-item">
+                <a href="{{ route('deposito.cambio-stagionale') }}" class="nav-link {{ request()->routeIs('deposito.cambio-stagionale') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Cambio stagionale</p>
+                </a>
+              </li>
+              @endhasanyrole
+              <li class="nav-item">
+                <a href="{{ route('deposito.report') }}" class="nav-link {{ request()->routeIs('deposito.report') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Report deposito</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+          @endhasanyrole
+
           @role('admin')
           <li class="nav-item has-treeview {{ request()->routeIs('settings.*') || request()->routeIs('impostazioni.*') ? 'menu-open' : '' }}">
             <a href="#" class="nav-link {{ request()->routeIs('settings.*') || request()->routeIs('impostazioni.*') ? 'active' : '' }}">
@@ -383,6 +418,7 @@
         aggiornaBadge('badge-magazzino', data.articoli_sotto_scorta);
         aggiornaBadge('badge-fatturazione', data.fatture_scadute);
         aggiornaBadge('badge-scadenziario', data.scadenze_imminenti);
+        aggiornaBadge('badge-deposito', data.deposito_da_ritirare);
       })
       .catch(function() {});
   }

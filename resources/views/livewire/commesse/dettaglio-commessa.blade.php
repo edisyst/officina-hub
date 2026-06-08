@@ -46,6 +46,11 @@
         @endforeach
 
         <!-- PDF buttons -->
+        @hasanyrole('admin|accettatore|meccanico')
+        <a href="{{ route('deposito.commessa', $commessa->id) }}" class="btn btn-sm btn-outline-info ml-1">
+          <i class="fas fa-circle-notch"></i> Pneumatici
+        </a>
+        @endhasanyrole
         <a href="{{ route('pdf.scheda', $commessa->id) }}" class="btn btn-sm btn-outline-danger" target="_blank">
           <i class="fas fa-file-pdf"></i> Scheda
         </a>

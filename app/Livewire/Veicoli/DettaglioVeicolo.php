@@ -8,6 +8,7 @@ use Livewire\Component;
 class DettaglioVeicolo extends Component
 {
     public Veicolo $veicolo;
+    public string $tabAttiva = 'storico';
 
     public function mount(int $veicoloId): void
     {
@@ -25,6 +26,10 @@ class DettaglioVeicolo extends Component
             ->latest('data_ingresso')
             ->get();
 
-        return view('livewire.veicoli.dettaglio-veicolo', compact('proprietari', 'commesse'));
+        $countPneumaticiDeposito = $this->veicolo->pneumatici()
+            ->where('stato', 'in_deposito')
+            ->count();
+
+        return view('livewire.veicoli.dettaglio-veicolo', compact('proprietari', 'commesse', 'countPneumaticiDeposito'));
     }
 }

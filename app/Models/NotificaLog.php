@@ -21,6 +21,7 @@ class NotificaLog extends Model
         'cliente_id',
         'tentativi',
         'inviata_at',
+        'pneumatico_id',
     ];
 
     protected function casts(): array
