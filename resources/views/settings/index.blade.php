@@ -80,6 +80,68 @@
     </div>
 
     <div class="col-md-4">
+
+      {{-- Lookup Targa --}}
+      <div class="card" x-data="{ mostraApiKey: false }">
+        <div class="card-header"><h3 class="card-title">Lookup Targa</h3></div>
+        <form action="{{ route('settings.update') }}" method="POST">
+          @csrf
+          <div class="card-body">
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="lt_abilitato"
+                  name="lookup_targa_abilitato" value="1"
+                  {{ ($settings['lookup_targa_abilitato'] ?? '0') === '1' ? 'checked' : '' }}>
+                <label class="custom-control-label" for="lt_abilitato">Abilita ricerca dati da targa</label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Provider</label>
+              <select class="form-control form-control-sm" name="lookup_targa_provider">
+                <option value="mock" {{ ($settings['lookup_targa_provider'] ?? 'mock') === 'mock' ? 'selected' : '' }}>Mock (solo test)</option>
+                <option value="infotarga" {{ ($settings['lookup_targa_provider'] ?? '') === 'infotarga' ? 'selected' : '' }}>InfoTarga.com</option>
+                <option value="openapi" {{ ($settings['lookup_targa_provider'] ?? '') === 'openapi' ? 'selected' : '' }}>OpenAPI.it</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>API Key</label>
+              <div class="input-group">
+                <input :type="mostraApiKey ? 'text' : 'password'" class="form-control form-control-sm"
+                  name="lookup_targa_api_key"
+                  value="{{ $settings['lookup_targa_api_key'] ?? '' }}"
+                  placeholder="Inserisci API key...">
+                <div class="input-group-append">
+                  <button type="button" class="btn btn-outline-secondary btn-sm" x-on:click="mostraApiKey = !mostraApiKey">
+                    <i :class="mostraApiKey ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Timeout (ms)</label>
+              <input type="number" class="form-control form-control-sm" name="lookup_targa_timeout_ms"
+                value="{{ $settings['lookup_targa_timeout_ms'] ?? '3000' }}" min="500" max="10000">
+            </div>
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="lt_auto"
+                  name="lookup_targa_auto_search" value="1"
+                  {{ ($settings['lookup_targa_auto_search'] ?? '0') === '1' ? 'checked' : '' }}>
+                <label class="custom-control-label" for="lt_auto">Ricerca automatica al blur del campo targa</label>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <button type="submit" class="btn btn-sm btn-primary">
+              <i class="fas fa-save mr-1"></i> Salva
+            </button>
+            <a href="{{ route('impostazioni.lookup-test') }}" class="btn btn-sm btn-outline-secondary ml-1" target="_blank">
+              <i class="fas fa-plug mr-1"></i> Test connessione
+            </a>
+          </div>
+        </form>
+      </div>
+
       <div class="card">
         <div class="card-header"><h3 class="card-title">Logo Officina</h3></div>
         <div class="card-body">

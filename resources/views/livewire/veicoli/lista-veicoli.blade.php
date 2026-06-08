@@ -77,7 +77,26 @@
             <div class="col-md-4">
               <div class="form-group">
                 <label>Targa</label>
-                <input wire:model="targa" type="text" class="form-control" style="text-transform:uppercase">
+                <div class="input-group">
+                  <input wire:model="targa" type="text" class="form-control" style="text-transform:uppercase"
+                    @if(app(\App\Services\LookupTarga\LookupTargaService::class)->isAbilitato() && app(\App\Services\LookupTarga\LookupTargaService::class)->isAutoSearch())
+                      wire:blur="cercaTarga"
+                    @endif>
+                  @if(app(\App\Services\LookupTarga\LookupTargaService::class)->isAbilitato())
+                  <div class="input-group-append">
+                    <button type="button" class="btn btn-outline-secondary" wire:click="cercaTarga"
+                      wire:loading.attr="disabled" wire:target="cercaTarga" title="Cerca dati dal DB targa">
+                      <span wire:loading wire:target="cercaTarga"><i class="fas fa-spinner fa-spin"></i></span>
+                      <span wire:loading.remove wire:target="cercaTarga"><i class="fas fa-search"></i></span>
+                    </button>
+                  </div>
+                  @endif
+                </div>
+                @if($lookupMessaggio)
+                  <small class="text-{{ str_contains($lookupMessaggio, 'non trovata') || str_contains($lookupMessaggio, 'non disponibile') ? 'warning' : 'info' }}">
+                    <i class="fas fa-info-circle mr-1"></i>{{ $lookupMessaggio }}
+                  </small>
+                @endif
               </div>
             </div>
             <div class="col-md-4">

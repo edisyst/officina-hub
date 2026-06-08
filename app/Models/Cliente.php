@@ -29,12 +29,15 @@ class Cliente extends Model
         'cap',
         'provincia',
         'note',
+        'patente_numero',
+        'patente_scadenza',
     ];
 
     protected function casts(): array
     {
         return [
-            'tipo' => TipoCliente::class,
+            'tipo'             => TipoCliente::class,
+            'patente_scadenza' => 'date',
         ];
     }
 

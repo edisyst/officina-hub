@@ -5,6 +5,7 @@ namespace App\Livewire\Veicoli;
 use App\Enums\Alimentazione;
 use App\Enums\TipoVeicolo;
 use App\Models\Veicolo;
+use App\Services\LookupTarga\LookupTargaService;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -52,6 +53,66 @@ class ListaVeicoli extends Component
 
     #[Rule('nullable|string')]
     public ?string $note = null;
+
+    // Lookup targa
+    public string  $lookupMessaggio    = '';
+    public bool    $lookupCaricamento  = false;
+
+    public function cercaTarga(): void
+    {
+        $service = app(LookupTargaService::class);
+
+        if (! $service->isAbilitato()) {
+            return;
+        }
+
+        $targa = strtoupper(trim($this->targa ?? ''));
+        if (empty($targa)) {
+            return;
+        }
+
+        $this->lookupCaricamento = true;
+        $this->lookupMessaggio   = '';
+
+        $dati = $service->cerca($targa);
+
+        $this->lookupCaricamento = false;
+
+        if ($dati === null) {
+            $this->lookupMessaggio = 'Targa non trovata o servizio temporaneamente non disponibile. Inserire i dati manualmente.';
+            return;
+        }
+
+        // Pre-compila i campi (rimangono modificabili)
+        if (! empty($dati['marca']))                $this->marca                = $dati['marca'];
+        if (! empty($dati['modello']))              $this->modello              = $dati['modello'];
+        if (! empty($dati['versione']))             $this->versione             = $dati['versione'];
+        if (! empty($dati['anno_immatricolazione'])) $this->anno_immatricolazione = $dati['anno_immatricolazione'];
+        if (! empty($dati['alimentazione']))        $this->alimentazione        = $this->mappaAlimentazione($dati['alimentazione']);
+        if (! empty($dati['cilindrata']))           $this->cilindrata           = $dati['cilindrata'];
+        if (! empty($dati['colore']))               $this->colore               = $dati['colore'];
+    }
+
+    private function mappaAlimentazione(string $value): string
+    {
+        $map = [
+            'benzina'   => 'benzina',
+            'gasoline'  => 'benzina',
+            'petrol'    => 'benzina',
+            'diesel'    => 'diesel',
+            'gasolio'   => 'diesel',
+            'ibrido'    => 'ibrido',
+            'hybrid'    => 'ibrido',
+            'elettrico' => 'elettrico',
+            'electric'  => 'elettrico',
+            'gpl'       => 'gpl',
+            'lpg'       => 'gpl',
+            'metano'    => 'metano',
+            'cng'       => 'metano',
+        ];
+
+        return $map[strtolower($value)] ?? 'benzina';
+    }
 
     public function updatingSearch(): void
     {

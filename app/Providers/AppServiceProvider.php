@@ -13,9 +13,11 @@ use App\Models\DviIspezione;
 use App\Models\Fornitore;
 use App\Models\Lavorazione;
 use App\Models\Ponte;
+use App\Models\PrestitoCortesia;
 use App\Models\Scadenza;
 use App\Models\Sinistro;
 use App\Models\Veicolo;
+use App\Models\VeicoloCortesia;
 use App\Observers\CommessaObserver;
 use App\Observers\DocumentoObserver;
 use App\Policies\AllegatoPolicy;
@@ -29,9 +31,11 @@ use App\Policies\DviIspezionePolicy;
 use App\Policies\FornitorePolicy;
 use App\Policies\LavorazionePolicy;
 use App\Policies\PontePolicy;
+use App\Policies\PrestitoCortesiaPolicy;
 use App\Policies\ScadenzaPolicy;
 use App\Policies\SinistroPolicy;
 use App\Policies\VeicoloPolicy;
+use App\Policies\VeicoloCortesiaPolicy;
 use App\Services\MailConfigService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -59,6 +63,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Scadenza::class, ScadenzaPolicy::class);
         Gate::policy(Sinistro::class, SinistroPolicy::class);
         Gate::policy(DviIspezione::class, DviIspezionePolicy::class);
+        Gate::policy(VeicoloCortesia::class, VeicoloCortesiaPolicy::class);
+        Gate::policy(PrestitoCortesia::class, PrestitoCortesiaPolicy::class);
 
         // Rate limiter per login: max 5 tentativi/minuto per IP
         RateLimiter::for('login', function (Request $request) {

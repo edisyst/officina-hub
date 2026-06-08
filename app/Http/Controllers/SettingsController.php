@@ -17,18 +17,30 @@ class SettingsController extends Controller
     public function update(Request $request)
     {
         $validated = $request->validate([
-            'officina_nome' => 'required|string|max:255',
-            'officina_indirizzo' => 'nullable|string|max:255',
-            'officina_piva' => 'nullable|string|max:20',
-            'officina_telefono' => 'nullable|string|max:30',
-            'officina_email' => 'nullable|email|max:255',
-            'costo_orario_default' => 'nullable|numeric|min:0',
-            'iva_default' => 'nullable|numeric|min:0|max:100',
-            'clausola_preventivo' => 'nullable|string',
+            'officina_nome'            => 'sometimes|required|string|max:255',
+            'officina_indirizzo'       => 'nullable|string|max:255',
+            'officina_piva'            => 'nullable|string|max:20',
+            'officina_telefono'        => 'nullable|string|max:30',
+            'officina_email'           => 'nullable|email|max:255',
+            'costo_orario_default'     => 'nullable|numeric|min:0',
+            'iva_default'              => 'nullable|numeric|min:0|max:100',
+            'clausola_preventivo'      => 'nullable|string',
+            // Lookup targa
+            'lookup_targa_provider'    => 'nullable|in:mock,infotarga,openapi',
+            'lookup_targa_api_key'     => 'nullable|string|max:255',
+            'lookup_targa_timeout_ms'  => 'nullable|integer|min:500|max:10000',
         ]);
 
+        // Checkbox booleani (non inclusi nel request se non spuntati)
+        $booleans = ['lookup_targa_abilitato', 'lookup_targa_auto_search'];
+        foreach ($booleans as $key) {
+            Setting::set($key, $request->has($key) ? '1' : '0');
+        }
+
         foreach ($validated as $key => $value) {
-            Setting::set($key, $value);
+            if ($value !== null) {
+                Setting::set($key, $value);
+            }
         }
 
         return back()->with('success', 'Impostazioni salvate con successo.');

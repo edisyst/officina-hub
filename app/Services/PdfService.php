@@ -7,6 +7,7 @@ use App\Models\Commessa;
 use App\Models\DannoVeicolo;
 use App\Models\Documento;
 use App\Models\FotoDanno;
+use App\Models\PrestitoCortesia;
 use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
@@ -77,6 +78,17 @@ class PdfService
         $filename = 'carrozzeria-' . str_replace(['/', '\\'], '-', $commessa->numero) . '.pdf';
 
         return $pdf->download($filename);
+    }
+
+    public function contrattoCortesia(PrestitoCortesia $prestito): Response
+    {
+        $prestito->load(['veicolo', 'cliente', 'commessa', 'utenteConsegna']);
+        $settings = Setting::pluck('value', 'key')->all();
+
+        $pdf = Pdf::loadView('pdf.contratto-cortesia', compact('prestito', 'settings'))
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->download("contratto-cortesia-{$prestito->id}.pdf");
     }
 
     public function checklistCompilata(ChecklistCompilata $compilata): Response

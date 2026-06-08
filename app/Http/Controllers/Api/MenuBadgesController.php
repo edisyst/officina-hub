@@ -11,6 +11,7 @@ use App\Models\Articolo;
 use App\Models\Commessa;
 use App\Models\Documento;
 use App\Models\Pneumatico;
+use App\Models\PrestitoCortesia;
 use App\Models\Scadenza;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
@@ -28,6 +29,7 @@ class MenuBadgesController extends Controller
                 'fatture_scadute'         => 0,
                 'scadenze_imminenti'      => 0,
                 'deposito_da_ritirare'    => 0,
+                'cortesia_in_ritardo'     => 0,
             ];
 
             if ($user->hasAnyRole(['admin', 'accettatore', 'cassa'])) {
@@ -59,6 +61,11 @@ class MenuBadgesController extends Controller
                         $q->where('data_azione', '<=', now()->subDays(180)->toDateString())
                     )
                     ->count();
+            }
+
+            // Badge cortesia: prestiti in ritardo
+            if ($user->hasAnyRole(['admin', 'accettatore'])) {
+                $b['cortesia_in_ritardo'] = PrestitoCortesia::inRitardo()->count();
             }
 
             return $b;

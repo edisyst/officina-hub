@@ -46,6 +46,11 @@
         @endforeach
 
         <!-- PDF buttons -->
+        @hasanyrole('admin|accettatore')
+        <a href="{{ route('cortesia.consegna.commessa', $commessa->id) }}" class="btn btn-sm btn-outline-primary ml-1">
+          <i class="fas fa-car-side"></i> Cortesia
+        </a>
+        @endhasanyrole
         @hasanyrole('admin|accettatore|meccanico')
         <a href="{{ route('deposito.commessa', $commessa->id) }}" class="btn btn-sm btn-outline-info ml-1">
           <i class="fas fa-circle-notch"></i> Pneumatici
@@ -373,6 +378,53 @@
   </div>
   @endhasanyrole
   @endif
+
+  {{-- Widget Veicolo di Cortesia --}}
+  @hasanyrole('admin|accettatore')
+  @php
+    $prestitoCortesia = \App\Models\PrestitoCortesia::where('commessa_id', $commessa->id)
+      ->whereIn('stato', ['prenotato', 'in_corso'])
+      ->with(['veicolo', 'cliente'])
+      ->latest()
+      ->first();
+  @endphp
+  <div class="card mt-3">
+    <div class="card-header bg-light py-2">
+      <h5 class="card-title mb-0"><i class="fas fa-car-side mr-2 text-primary"></i>Veicolo di Cortesia</h5>
+    </div>
+    <div class="card-body py-2">
+      @if($prestitoCortesia)
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <strong>{{ $prestitoCortesia->veicolo->targa }}</strong>
+            {{ $prestitoCortesia->veicolo->marca }} {{ $prestitoCortesia->veicolo->modello }}
+            &bull;
+            <span class="badge badge-{{ $prestitoCortesia->stato->badgeClass() }}">{{ $prestitoCortesia->stato->label() }}</span>
+            &bull; Rientro previsto: <strong>{{ $prestitoCortesia->data_rientro_prevista->format('d/m/Y') }}</strong>
+            @if($prestitoCortesia->isInRitardo())
+              <span class="badge badge-danger ml-1">IN RITARDO</span>
+            @endif
+          </div>
+          <div>
+            <a href="{{ route('cortesia.rientro', $prestitoCortesia->id) }}" class="btn btn-sm btn-warning">
+              <i class="fas fa-undo mr-1"></i> Registra rientro
+            </a>
+            <a href="{{ route('cortesia.contratto', $prestitoCortesia->id) }}" class="btn btn-sm btn-outline-secondary ml-1" target="_blank">
+              <i class="fas fa-file-pdf"></i> Contratto
+            </a>
+          </div>
+        </div>
+      @else
+        <div class="d-flex align-items-center justify-content-between">
+          <span class="text-muted">Nessun veicolo di cortesia assegnato a questa commessa.</span>
+          <a href="{{ route('cortesia.consegna.commessa', $commessa->id) }}" class="btn btn-sm btn-primary">
+            <i class="fas fa-plus mr-1"></i> Assegna veicolo di cortesia
+          </a>
+        </div>
+      @endif
+    </div>
+  </div>
+  @endhasanyrole
 
   <!-- Modal Transizione Stato -->
   @if($showTransizioneModal && $statoTarget)

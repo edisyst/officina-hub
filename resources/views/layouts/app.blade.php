@@ -254,6 +254,43 @@
           </li>
           @endhasanyrole
 
+          @hasanyrole('admin|accettatore')
+          <li class="nav-item has-treeview {{ request()->routeIs('cortesia.*') ? 'menu-open' : '' }}">
+            <a href="#" class="nav-link {{ request()->routeIs('cortesia.*') ? 'active' : '' }}">
+              <i class="nav-icon fas fa-car-side"></i>
+              <p>
+                Cortesia
+                <span id="badge-cortesia" class="badge badge-danger right" style="display:none"></span>
+                <i class="fas fa-angle-left right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{{ route('cortesia.index') }}" class="nav-link {{ request()->routeIs('cortesia.index') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Calendario</p>
+                </a>
+              </li>
+              @role('admin')
+              <li class="nav-item">
+                <a href="{{ route('cortesia.flotta') }}" class="nav-link {{ request()->routeIs('cortesia.flotta') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Flotta</p>
+                </a>
+              </li>
+              @endrole
+              @hasanyrole('admin|accettatore|cassa')
+              <li class="nav-item">
+                <a href="{{ route('cortesia.report') }}" class="nav-link {{ request()->routeIs('cortesia.report') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Report</p>
+                </a>
+              </li>
+              @endhasanyrole
+            </ul>
+          </li>
+          @endhasanyrole
+
           @hasanyrole('admin|accettatore|cassa')
           <li class="nav-item has-treeview {{ request()->routeIs('deposito.*') ? 'menu-open' : '' }}">
             <a href="#" class="nav-link {{ request()->routeIs('deposito.*') ? 'active' : '' }}">
@@ -419,6 +456,7 @@
         aggiornaBadge('badge-fatturazione', data.fatture_scadute);
         aggiornaBadge('badge-scadenziario', data.scadenze_imminenti);
         aggiornaBadge('badge-deposito', data.deposito_da_ritirare);
+        aggiornaBadge('badge-cortesia', data.cortesia_in_ritardo);
       })
       .catch(function() {});
   }

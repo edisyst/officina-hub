@@ -186,6 +186,45 @@ GET  /analytics/pacchetti               → analytics.pacchetti    (admin) — r
 - Export CSV: BOM UTF-8 (`\xEF\xBB\xBF`) per compatibilità Excel italiano.
 - Analytics pacchetti: top 10 per utilizzi + tariffe fuori listino (scostamento > 15% da prezzo listino).
 
+## Route Step 13
+
+```
+GET  /cortesia                               → cortesia.index              (admin, accettatore) — calendario disponibilità
+GET  /cortesia/flotta                        → cortesia.flotta             (admin) — gestione flotta
+GET  /cortesia/report                        → cortesia.report             (admin, accettatore, cassa)
+GET  /cortesia/consegna                      → cortesia.consegna           (admin, accettatore) — flusso consegna
+GET  /cortesia/consegna/commessa/{id}        → cortesia.consegna.commessa  (admin, accettatore) — da commessa
+GET  /cortesia/prestiti/{id}/rientro         → cortesia.rientro            (admin, accettatore) — flusso rientro
+GET  /cortesia/prestiti/{id}/contratto       → cortesia.contratto          (admin, accettatore) — PDF contratto
+GET  /api/cortesia/disponibilita             → api.cortesia.disponibilita  (auth) — JSON FullCalendar risorse+eventi
+GET  /impostazioni/lookup-targa-test         → impostazioni.lookup-test    (admin) — test connessione API targa
+```
+
+## Note architetturali Step 13
+
+### Veicoli di cortesia (Parte A)
+- `VeicoloCortesia`: flotta auto/moto/furgone; `isDisponibile(dal, al)` verifica sovrapposizioni sui prestiti attivi.
+- `PrestitoCortesia`: registra tutto il ciclo consegna→rientro; immutabile nel tracciamento (mai eliminare, solo aggiornare stato).
+- `km_percorsi` e `delta_carburante` sono accessor calcolati — non colonne DB.
+- Flusso consegna (4 step tablet): selezione periodo → scelta veicolo → firma → conferma. Il canvas firma usa canvas nativo (non signature_pad) per semplicità.
+- Flusso rientro: validazione `km_rientro >= km_consegna` server-side e client-side; avviso carburante se delta < -10%.
+- PDF contratto comodato in `resources/views/pdf/contratto-cortesia.blade.php`: **le clausole legali sono testo fisso nel template Blade** (art. 1803 c.c. e ss.) — modificarle richiede accesso al codice, non è configurabile da settings.
+- `PdfService::contrattoCortesia()` scarica il PDF; route `cortesia.contratto`.
+- Badge menu "Cortesia" = count prestiti in ritardo (`inRitardo` scope: stato `in_corso` + `data_rientro_prevista < oggi`).
+- Endpoint FullCalendar `/api/cortesia/disponibilita` restituisce `{risorse: [...], eventi: [...]}` — formato diverso da `/api/appuntamenti` (che restituisce solo l'array eventi).
+- `patente_numero` e `patente_scadenza` aggiunti a `clienti` — esclusi dall'audit log e dai CSV export (dati sensibili).
+- Widget "Veicolo di cortesia" in `DettaglioCommessa`: query diretta `@php` nel Blade (accettabile, N+1 solo se molte commesse aperte).
+- Pulsante "Cortesia" nell'header di `DettaglioCommessa` → `/cortesia/consegna/commessa/{id}`.
+
+### Lookup Targa (Parte B)
+- `LookupTargaService`: singleton-like; legge settings a runtime; restituisce `null` senza errori se disabilitato.
+- Provider: `MockProvider` (deterministico, no API key), `InfoTargaProvider` (Bearer token), `OpenApiProvider` (x-api-key header).
+- Cache 30 giorni per targa: `Cache::remember("targa_{$targa}", ...)`. Invalidazione manuale con `Cache::forget("targa_XX123YY")`.
+- **Non loggare mai la API key** — i provider loggano solo targa + status code HTTP in caso di errore.
+- Settings aggiunti: `lookup_targa_abilitato` (0), `lookup_targa_provider` (mock), `lookup_targa_api_key`, `lookup_targa_timeout_ms` (3000), `lookup_targa_auto_search` (0).
+- Pulsante "Cerca dati" nel form veicolo: visibile SOLO se `lookup_targa_abilitato = true`; opzionalmente auto al blur.
+- Test connessione: `GET /impostazioni/lookup-targa-test` → risposta JSON raw in `<pre>` (solo admin).
+
 ## Route Step 12
 
 ```

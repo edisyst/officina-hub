@@ -1,12 +1,14 @@
 <?php
 
 use App\Http\Controllers\Api\AppuntamentiController;
+use App\Http\Controllers\Api\CortesiaDisponibilitaController;
 use App\Http\Controllers\DepositoController;
 use App\Http\Controllers\Api\DviUploadController;
 use App\Http\Controllers\Api\MenuBadgesController;
 use App\Http\Controllers\Api\RisorseAgendaController;
 use App\Http\Controllers\CarrozzeriaController;
 use App\Http\Controllers\CommessaController;
+use App\Http\Controllers\CortesiaController;
 use App\Http\Controllers\DviController;
 use App\Http\Controllers\FatturazioneController;
 use App\Http\Controllers\PdfController;
@@ -17,6 +19,7 @@ use App\Http\Controllers\SettingsController;
 use App\Models\ChecklistTemplate;
 use App\Models\Commessa;
 use App\Models\DviIspezione;
+use App\Models\PrestitoCortesia;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
@@ -135,7 +138,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/api/appuntamenti', [AppuntamentiController::class, 'index'])->name('api.appuntamenti');
         Route::get('/api/risorse-agenda', [RisorseAgendaController::class, 'index'])->name('api.risorse-agenda');
         Route::get('/api/menu-badges', [MenuBadgesController::class, 'index'])->name('api.menu-badges');
+        Route::get('/api/cortesia/disponibilita', [CortesiaDisponibilitaController::class, 'index'])->name('api.cortesia.disponibilita');
     });
+
+    // Veicoli di cortesia
+    Route::middleware('role:admin|accettatore')->group(function () {
+        Route::get('/cortesia', fn() => view('cortesia.index'))->name('cortesia.index');
+        Route::get('/cortesia/consegna', fn() => view('cortesia.consegna'))->name('cortesia.consegna');
+        Route::get('/cortesia/consegna/commessa/{commessa}', function (Commessa $commessa) {
+            return view('cortesia.consegna', ['commessaId' => $commessa->id]);
+        })->name('cortesia.consegna.commessa');
+        Route::get('/cortesia/prestiti/{prestito}/rientro', function (PrestitoCortesia $prestito) {
+            return view('cortesia.rientro', ['prestito' => $prestito]);
+        })->name('cortesia.rientro');
+    });
+
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/cortesia/flotta', fn() => view('cortesia.flotta'))->name('cortesia.flotta');
+    });
+
+    Route::middleware('role:admin|accettatore|cassa')->group(function () {
+        Route::get('/cortesia/report', fn() => view('cortesia.report'))->name('cortesia.report');
+    });
+
+    // PDF contratto cortesia
+    Route::get('/cortesia/prestiti/{prestito}/contratto', [CortesiaController::class, 'contrattoPdf'])
+        ->middleware('role:admin|accettatore')
+        ->name('cortesia.contratto');
 
     // DVI — creazione e gestione (staff)
     Route::middleware('role:admin|meccanico|accettatore')->group(function () {
@@ -208,6 +237,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/impostazioni/tariffe', fn() => view('impostazioni.tariffe'))->name('impostazioni.tariffe');
         Route::get('/impostazioni/pacchetti', fn() => view('impostazioni.pacchetti'))->name('impostazioni.pacchetti');
         Route::get('/analytics/pacchetti', fn() => view('analytics.pacchetti'))->name('analytics.pacchetti');
+
+        // Test connessione lookup targa
+        Route::get('/impostazioni/lookup-targa-test', function () {
+            $service = app(\App\Services\LookupTarga\LookupTargaService::class);
+            if (! $service->isAbilitato()) {
+                return response('<pre>Lookup targa disabilitato nelle impostazioni.</pre>');
+            }
+            $risultato = $service->cercaSenzaCache('AB123CD');
+            return response('<pre>' . json_encode($risultato, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . '</pre>');
+        })->name('impostazioni.lookup-test');
     });
 
     // Fatturazione (admin + cassa)

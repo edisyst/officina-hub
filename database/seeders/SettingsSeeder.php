@@ -120,6 +120,13 @@ class SettingsSeeder extends Seeder
                 '{{NOME_OFFICINA}} — {{TELEFONO_OFFICINA}}',
             ]),
 
+            // Lookup targa (disabilitato di default)
+            'lookup_targa_abilitato'    => '0',
+            'lookup_targa_provider'     => 'mock',
+            'lookup_targa_api_key'      => '',
+            'lookup_targa_timeout_ms'   => '3000',
+            'lookup_targa_auto_search'  => '0',
+
             'template_email_richiamo_scadenza' => implode("\n", [
                 'Oggetto: Promemoria {{TIPO_SCADENZA}} — {{TARGA}}',
                 '',
