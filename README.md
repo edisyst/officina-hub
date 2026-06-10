@@ -142,6 +142,18 @@ Per aggiungere altri utenti con ruoli diversi (`accettatore`, `meccanico`, `cass
 
 ---
 
+## Documentazione
+
+| Documento | Contenuto |
+|-----------|-----------|
+| [Architettura](docs/architettura.md) | Stack, pattern (Actions/Services/Policies), struttura directory, sicurezza, queue |
+| [Moduli funzionali](docs/moduli.md) | Descrizione di ogni area applicativa con route e note operative |
+| [Ruoli e Permessi](docs/ruoli-permessi.md) | Ruoli, Policy, workflow stati commessa, audit log, portali pubblici |
+| [Fatturazione Elettronica](docs/fatturazione-elettronica.md) | FatturaPA FPR12, ciclo documento, XML/ZIP/PDF, Nota di Credito |
+| [Canale SdI Diretto](docs/sdi-diretto.md) | Guida all'attivazione del canale diretto AdE (disabilitato di default) |
+
+---
+
 ## Funzionalità
 
 | Area | Funzionalità |
@@ -197,9 +209,9 @@ docker-compose logs -f app
 
 ---
 
-## Riprodurre lo sviluppo
+## Scaffolding iniziale *(solo documentazione)*
 
-Sequenza completa dei comandi usati per costruire il progetto da zero.
+> Questa sezione documenta come è stato costruito il progetto da zero. Non è necessaria per installare o usare l'applicazione.
 
 ### 1. Scaffolding Laravel + Breeze
 
