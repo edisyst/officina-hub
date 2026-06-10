@@ -249,6 +249,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('impostazioni.lookup-test');
     });
 
+    // Contabilità (admin + cassa)
+    Route::middleware('role:admin|cassa')->group(function () {
+        Route::get('/contabilita/prima-nota', fn() => view('contabilita.prima-nota'))
+            ->name('contabilita.prima-nota');
+        Route::get('/contabilita/riepilogo', fn() => view('contabilita.riepilogo'))
+            ->name('contabilita.riepilogo');
+        Route::get('/contabilita/export-sdi-batch', fn() => view('contabilita.export-sdi-batch'))
+            ->name('contabilita.export-sdi-batch');
+    });
+
     // Fatturazione (admin + cassa)
     Route::middleware('role:admin|cassa')->group(function () {
         Route::get('/fatturazione/documenti', fn() => view('fatturazione.documenti'))

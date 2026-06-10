@@ -1,4 +1,4 @@
-# Officina Hub — CLAUDE.md
+# Officina Hub — AGENTS.md
 
 Gestionale web on-premise per officine meccaniche (auto, moto, carrozzerie).
 Stack: Laravel 11 + Livewire 3 + Alpine.js + AdminLTE 3 + MariaDB 11 + FullCalendar v6.
@@ -72,30 +72,6 @@ php artisan test --testsuite=Feature
 # Test specifico
 php artisan test --filter CommessaFlussoTest
 ```
-
-## Route Step 14
-
-```
-GET  /contabilita/prima-nota             → contabilita.prima-nota        (admin, cassa)
-GET  /contabilita/riepilogo              → contabilita.riepilogo         (admin, cassa)
-GET  /contabilita/export-sdi-batch       → contabilita.export-sdi-batch  (admin, cassa)
-```
-
-## Note architetturali Step 14
-
-- `PrimaNota`: tabella `prima_nota` con SoftDeletes; `automatico=true` per i record generati da `PagamentoObserver` — non modificabili dall'interfaccia.
-- `PagamentoObserver::created()`: registrato in `AppServiceProvider`; crea automaticamente un record `prima_nota` di tipo `entrata` ad ogni pagamento fattura.
-- `ContoPrimaNota::daMetodo()`: helper che mappa il metodo di pagamento al conto (contanti→cassa, carta→pos, altri→banca).
-- Enums aggiunti: `TipoPrimaNota`, `MetodoPrimaNota`, `ContoPrimaNota`, `FormatoExportContabile`.
-- `CsvGenericoFormatter`: produce CSV UTF-8+BOM con separatore `;` — sempre disponibile, compatibile Excel italiano.
-- `TeamSystemFormatter`: tracciato a larghezza fissa per TeamSystem Studio; codici conto configurabili in settings.
-- `ZucchettiFormatter`, `DatagammaFormatter`: stub — lanciano `\RuntimeException`. **TODO**: implementare dalle specifiche ufficiali dei rispettivi vendor.
-- `ConservazioneService`: stub — lancia eccezione se non abilitata. **TODO**: integrare con conservatore accreditato AgID prima di abilitare.
-- Settings aggiunti: `export_contabile_formato` (csv_generico), `export_contabile_codice_conto_*` (placeholder — da verificare col commercialista), `conservazione_sostitutiva_abilitata` (0).
-- `ExportSdiBatch`: genera ZIP con XML FatturaPA dei documenti selezionati + `indice.csv`; usa `FatturaPAService::genera()` già esistente.
-- `RiepilogoCommercialista`: calcola i totali del periodo + chiama il formatter configurato; PDF via dompdf con timbro "NON HA VALORE FISCALE".
-- Il formato export per il riepilogo commercialista si legge da `settings.export_contabile_formato` (cambiabile in Impostazioni senza deploy).
-- Test: `ContabilitaStep14Test` — observer prima nota, movimenti manuali, CSV generico, TeamSystem, stub exceptions, route access.
 
 ## Struttura chiave
 

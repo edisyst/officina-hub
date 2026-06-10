@@ -242,6 +242,38 @@
           </li>
           @endhasanyrole
 
+          @hasanyrole('admin|cassa')
+          <li class="nav-item has-treeview {{ request()->routeIs('contabilita.*') ? 'menu-open' : '' }}">
+            <a href="#" class="nav-link {{ request()->routeIs('contabilita.*') ? 'active' : '' }}">
+              <i class="nav-icon fas fa-calculator"></i>
+              <p>
+                Contabilità
+                <i class="fas fa-angle-left right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{{ route('contabilita.prima-nota') }}" class="nav-link {{ request()->routeIs('contabilita.prima-nota') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Prima nota</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{{ route('contabilita.riepilogo') }}" class="nav-link {{ request()->routeIs('contabilita.riepilogo') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Export commercialista</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{{ route('contabilita.export-sdi-batch') }}" class="nav-link {{ request()->routeIs('contabilita.export-sdi-batch') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Export XML SDI batch</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+          @endhasanyrole
+
           @hasanyrole('admin|accettatore')
           <li class="nav-item">
             <a href="{{ route('scadenziario.index') }}" class="nav-link {{ request()->routeIs('scadenziario.*') ? 'active' : '' }}">

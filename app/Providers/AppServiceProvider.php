@@ -9,6 +9,7 @@ use App\Models\Cliente;
 use App\Models\Commessa;
 use App\Models\CompagniaAssicurativa;
 use App\Models\Documento;
+use App\Models\Pagamento;
 use App\Models\DviIspezione;
 use App\Models\Fornitore;
 use App\Models\Lavorazione;
@@ -20,6 +21,7 @@ use App\Models\Veicolo;
 use App\Models\VeicoloCortesia;
 use App\Observers\CommessaObserver;
 use App\Observers\DocumentoObserver;
+use App\Observers\PagamentoObserver;
 use App\Policies\AllegatoPolicy;
 use App\Policies\AppuntamentoPolicy;
 use App\Policies\ArticoloPolicy;
@@ -85,6 +87,7 @@ class AppServiceProvider extends ServiceProvider
 
         Commessa::observe(CommessaObserver::class);
         Documento::observe(DocumentoObserver::class);
+        Pagamento::observe(PagamentoObserver::class);
 
         // Applica configurazione SMTP da DB (solo se non in console/test per evitare query)
         if (! $this->app->runningInConsole() || $this->app->environment('testing') === false) {

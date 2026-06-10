@@ -29,10 +29,17 @@ class SettingsController extends Controller
             'lookup_targa_provider'    => 'nullable|in:mock,infotarga,openapi',
             'lookup_targa_api_key'     => 'nullable|string|max:255',
             'lookup_targa_timeout_ms'  => 'nullable|integer|min:500|max:10000',
+            // Export contabile
+            'export_contabile_formato'                  => 'nullable|in:csv_generico,primanota_txt,teamsystem,zucchetti,datagamma',
+            'export_contabile_codice_conto_vendite'     => 'nullable|string|max:20',
+            'export_contabile_codice_conto_iva_vendite' => 'nullable|string|max:20',
+            'export_contabile_codice_conto_clienti'     => 'nullable|string|max:20',
+            'export_contabile_codice_conto_cassa'       => 'nullable|string|max:20',
+            'export_contabile_codice_conto_banca'       => 'nullable|string|max:20',
         ]);
 
         // Checkbox booleani (non inclusi nel request se non spuntati)
-        $booleans = ['lookup_targa_abilitato', 'lookup_targa_auto_search'];
+        $booleans = ['lookup_targa_abilitato', 'lookup_targa_auto_search', 'conservazione_sostitutiva_abilitata'];
         foreach ($booleans as $key) {
             Setting::set($key, $request->has($key) ? '1' : '0');
         }

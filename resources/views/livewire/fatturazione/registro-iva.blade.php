@@ -3,6 +3,9 @@
     <div class="card-header">
       <h3 class="card-title"><i class="fas fa-book mr-2"></i>Registro IVA Vendite</h3>
       <div class="card-tools">
+        <a href="{{ route('contabilita.riepilogo') }}" class="btn btn-sm btn-outline-primary mr-1">
+          <i class="fas fa-calculator mr-1"></i> Export commercialista
+        </a>
         <button wire:click="esportaCsv" class="btn btn-sm btn-outline-secondary">
           <i class="fas fa-file-csv mr-1"></i> Esporta CSV
         </button>
