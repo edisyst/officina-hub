@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\SegmentoCrm;
 use App\Enums\StatoCommessa;
 use App\Enums\StatoDocumento;
 use App\Enums\StatoPneumatico;
 use App\Enums\TipoDocumento;
 use App\Http\Controllers\Controller;
 use App\Models\Articolo;
+use App\Models\Cliente;
 use App\Models\Commessa;
 use App\Models\Documento;
 use App\Models\Pneumatico;
@@ -30,6 +32,7 @@ class MenuBadgesController extends Controller
                 'scadenze_imminenti'      => 0,
                 'deposito_da_ritirare'    => 0,
                 'cortesia_in_ritardo'     => 0,
+                'crm_a_rischio'           => 0,
             ];
 
             if ($user->hasAnyRole(['admin', 'accettatore', 'cassa'])) {
@@ -66,6 +69,13 @@ class MenuBadgesController extends Controller
             // Badge cortesia: prestiti in ritardo
             if ($user->hasAnyRole(['admin', 'accettatore'])) {
                 $b['cortesia_in_ritardo'] = PrestitoCortesia::inRitardo()->count();
+            }
+
+            // Badge CRM: clienti a rischio (cache 60 min)
+            if ($user->hasRole('admin')) {
+                $b['crm_a_rischio'] = Cache::remember('crm_badge_a_rischio', 3600, fn() =>
+                    Cliente::where('segmento_crm', SegmentoCrm::ARischio->value)->count()
+                );
             }
 
             return $b;

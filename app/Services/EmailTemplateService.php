@@ -43,6 +43,18 @@ class EmailTemplateService
         return compact('oggetto', 'corpo');
     }
 
+    /**
+     * Compila oggetto e corpo forniti direttamente (senza leggere da settings).
+     */
+    public function compilaManuale(string $oggetto, string $corpo, array $variabili): array
+    {
+        foreach ($variabili as $chiave => $valore) {
+            $oggetto = str_replace("{{{$chiave}}}", (string) $valore, $oggetto);
+            $corpo   = str_replace("{{{$chiave}}}", (string) $valore, $corpo);
+        }
+        return compact('oggetto', 'corpo');
+    }
+
     /** Variabili disponibili per i template commessa */
     public static function variabiliCommessa(): array
     {

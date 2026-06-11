@@ -209,6 +209,42 @@
           </li>
           @endcanany
 
+          @hasanyrole('admin|accettatore|cassa')
+          <li class="nav-item has-treeview {{ request()->routeIs('acquisti.*') ? 'menu-open' : '' }}">
+            <a href="#" class="nav-link {{ request()->routeIs('acquisti.*') ? 'active' : '' }}">
+              <i class="nav-icon fas fa-shopping-cart"></i>
+              <p>
+                Acquisti
+                <i class="fas fa-angle-left right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              @hasanyrole('admin|accettatore')
+              <li class="nav-item">
+                <a href="{{ route('acquisti.ordini') }}" class="nav-link {{ request()->routeIs('acquisti.ordini*') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Ordini fornitori</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{{ route('acquisti.genera-ordini') }}" class="nav-link {{ request()->routeIs('acquisti.genera-ordini') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Genera da sottoscorta</p>
+                </a>
+              </li>
+              @endhasanyrole
+              @hasanyrole('admin|cassa')
+              <li class="nav-item">
+                <a href="{{ route('acquisti.fatture') }}" class="nav-link {{ request()->routeIs('acquisti.fatture') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Fatture d'acquisto</p>
+                </a>
+              </li>
+              @endhasanyrole
+            </ul>
+          </li>
+          @endhasanyrole
+
           @hasanyrole('admin|cassa')
           <li class="nav-item has-treeview {{ request()->routeIs('fatturazione.*') ? 'menu-open' : '' }}">
             <a href="#" class="nav-link {{ request()->routeIs('fatturazione.*') ? 'active' : '' }}">
@@ -273,6 +309,33 @@
             </ul>
           </li>
           @endhasanyrole
+
+          @role('admin')
+          <li class="nav-item has-treeview {{ request()->routeIs('crm.*') ? 'menu-open' : '' }}">
+            <a href="#" class="nav-link {{ request()->routeIs('crm.*') ? 'active' : '' }}">
+              <i class="nav-icon fas fa-heart"></i>
+              <p>
+                CRM
+                <span id="badge-crm" class="badge badge-warning right" style="display:none"></span>
+                <i class="fas fa-angle-left right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{{ route('crm.dashboard') }}" class="nav-link {{ request()->routeIs('crm.dashboard') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Dashboard retention</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{{ route('crm.campagne') }}" class="nav-link {{ request()->routeIs('crm.campagne') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Campagne email</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+          @endrole
 
           @hasanyrole('admin|accettatore')
           <li class="nav-item">
@@ -489,6 +552,7 @@
         aggiornaBadge('badge-scadenziario', data.scadenze_imminenti);
         aggiornaBadge('badge-deposito', data.deposito_da_ritirare);
         aggiornaBadge('badge-cortesia', data.cortesia_in_ritardo);
+        aggiornaBadge('badge-crm', data.crm_a_rischio);
       })
       .catch(function() {});
   }

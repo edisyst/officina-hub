@@ -2,17 +2,31 @@
   <div class="card">
     <div class="card-header">
       <h3 class="card-title">Clienti</h3>
-      <div class="card-tools d-flex gap-2">
+      <div class="card-tools d-flex flex-wrap gap-2">
         <input wire:model.live.debounce.300ms="search" type="text"
-          class="form-control form-control-sm mr-2" placeholder="Cerca per nome, CF, P.IVA...">
+          class="form-control form-control-sm mr-2" placeholder="Cerca per nome, CF, P.IVA..." style="width:200px">
+        <select wire:model.live="filtroSegmento" class="form-control form-control-sm" style="width:130px">
+          <option value="">Tutti segmenti</option>
+          @foreach ($segmentiCrm as $s)
+            <option value="{{ $s->value }}">{{ $s->label() }}</option>
+          @endforeach
+        </select>
+        <select wire:model.live="filtroConsenso" class="form-control form-control-sm" style="width:140px">
+          <option value="">Tutti (consenso)</option>
+          <option value="1">Con consenso</option>
+          <option value="0">Senza consenso</option>
+        </select>
         @can('create', \App\Models\Cliente::class)
         <button wire:click="apriModal()" class="btn btn-sm btn-primary">
-          <i class="fas fa-plus"></i> Nuovo Cliente
+          <i class="fas fa-plus"></i> Nuovo
         </button>
         @endcan
         @role('admin')
+        <button wire:click="esportaCsv" class="btn btn-sm btn-outline-success">
+          <i class="fas fa-file-csv"></i> CSV
+        </button>
         <button wire:click="$toggle('showTrashedModal')" class="btn btn-sm btn-secondary">
-          <i class="fas fa-trash-restore"></i> Eliminati
+          <i class="fas fa-trash-restore"></i>
         </button>
         @endrole
       </div>
@@ -26,6 +40,7 @@
             <th>Telefono</th>
             <th>Email</th>
             <th>Città</th>
+            <th>Segmento</th>
             <th width="120">Azioni</th>
           </tr>
         </thead>
@@ -44,6 +59,13 @@
             <td>{{ $cliente->telefono ?? '-' }}</td>
             <td>{{ $cliente->email ?? '-' }}</td>
             <td>{{ $cliente->citta ?? '-' }}</td>
+            <td>
+              @if ($cliente->segmento_crm)
+                <span class="badge {{ $cliente->segmento_crm->badgeClass() }}">{{ $cliente->segmento_crm->label() }}</span>
+              @else
+                <span class="text-muted">—</span>
+              @endif
+            </td>
             <td>
               @can('update', $cliente)
               <button wire:click="apriModal({{ $cliente->id }})" class="btn btn-xs btn-info" title="Modifica">

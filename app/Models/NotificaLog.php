@@ -11,6 +11,8 @@ class NotificaLog extends Model
 
     protected $fillable = [
         'tipo',
+        'sottotipo',
+        'campagna_email_id',
         'destinatario',
         'oggetto',
         'corpo',

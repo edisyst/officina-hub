@@ -7,6 +7,7 @@ use App\Actions\Scadenze\CreaScadenzeAutomaticheAction;
 use App\Enums\StatoCommessa;
 use App\Models\Commessa;
 use App\Services\Analytics\KpiService;
+use App\Services\Crm\SegmentazioneService;
 
 class CommessaObserver
 {
@@ -26,6 +27,16 @@ class CommessaObserver
             $utente = auth()->user() ?? $commessa->user;
             if ($utente) {
                 app(ScaricoCommessaAction::class)->execute($commessa, $utente);
+            }
+        }
+
+        // Aggiornamento incrementale CRM al passaggio a stato chiuso
+        if (in_array($commessa->stato, [StatoCommessa::Completata, StatoCommessa::Consegnata, StatoCommessa::Fatturata])) {
+            if ($commessa->cliente_id) {
+                $cliente = $commessa->cliente;
+                if ($cliente) {
+                    app(SegmentazioneService::class)->aggiornaIncrementale($cliente);
+                }
             }
         }
 

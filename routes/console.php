@@ -1,5 +1,7 @@
 <?php
 
+use App\Jobs\AggiornaPunteggiCrm;
+use App\Jobs\InviaAuguriCompleanno;
 use App\Jobs\InviaRichiamiScadenza;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -11,6 +13,12 @@ Artisan::command('inspire', function () {
 
 // Richiami scadenze automatici ogni giorno alle 08:00
 Schedule::job(new InviaRichiamiScadenza)->dailyAt('08:00')->name('richiami-scadenze');
+
+// CRM: aggiorna punteggi e segmenti clienti ogni notte alle 03:30
+Schedule::job(new AggiornaPunteggiCrm)->dailyAt('03:30')->name('crm-punteggi');
+
+// CRM: auguri di compleanno ogni giorno alle 09:00
+Schedule::job(new InviaAuguriCompleanno)->dailyAt('09:00')->name('crm-compleanni');
 
 // Backup automatico ogni notte alle 02:00
 Schedule::command('backup:run')->dailyAt('02:00')->name('backup-run');

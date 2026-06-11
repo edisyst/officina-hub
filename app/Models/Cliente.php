@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\SegmentoCrm;
 use App\Enums\TipoCliente;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -31,13 +32,28 @@ class Cliente extends Model
         'note',
         'patente_numero',
         'patente_scadenza',
+        'data_nascita',
+        'professione',
+        'come_ci_ha_conosciuto',
+        'consenso_marketing',
+        'consenso_marketing_at',
+        'valore_lifetime',
+        'numero_visite',
+        'ultima_visita_at',
+        'segmento_crm',
     ];
 
     protected function casts(): array
     {
         return [
-            'tipo'             => TipoCliente::class,
-            'patente_scadenza' => 'date',
+            'tipo'                  => TipoCliente::class,
+            'patente_scadenza'      => 'date',
+            'data_nascita'          => 'date',
+            'consenso_marketing'    => 'boolean',
+            'consenso_marketing_at' => 'datetime',
+            'ultima_visita_at'      => 'datetime',
+            'segmento_crm'          => SegmentoCrm::class,
+            'valore_lifetime'       => 'decimal:2',
         ];
     }
 
@@ -51,6 +67,21 @@ class Cliente extends Model
     public function commesse()
     {
         return $this->hasMany(Commessa::class);
+    }
+
+    public function crmNote()
+    {
+        return $this->hasMany(CrmNota::class)->latest('data_interazione');
+    }
+
+    public function campagnaInvii()
+    {
+        return $this->hasMany(CampagnaInvio::class);
+    }
+
+    public function documenti()
+    {
+        return $this->hasMany(Documento::class);
     }
 
     /** Nome visualizzabile in base al tipo di cliente */
