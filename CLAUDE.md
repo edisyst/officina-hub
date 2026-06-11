@@ -73,6 +73,54 @@ php artisan test --testsuite=Feature
 php artisan test --filter CommessaFlussoTest
 ```
 
+## Route Step 16
+
+```
+GET  /crm/dashboard          → crm.dashboard    (admin) — retention dashboard
+GET  /crm/campagne           → crm.campagne     (admin) — campagne email
+```
+
+## Note architetturali Step 16
+
+- **GDPR art. 6**: `consenso_marketing = false` è vincolo legale — `InviaCampagnaEmail` lancia `\RuntimeException` se tenta invio a cliente senza consenso. Non bypassabile da admin.
+- `SegmentazioneService::aggiornaIncrementale()`: aggiornamento CRM su singolo cliente — chiamato da `CommessaObserver` al passaggio a stato chiuso. Nessun ricalcolo ad ogni request.
+- `AggiornaPunteggiCrm` job: ricalcola `segmento_crm`, `valore_lifetime`, `numero_visite`, `ultima_visita_at` per tutti i clienti ogni notte alle 03:30.
+- `InviaAuguriCompleanno` job: idempotente via `notifiche_log.sottotipo = 'compleanno'` + check data odierna. Solo clienti con `consenso_marketing = true` + `email` + `data_nascita` oggi (giorno+mese).
+- `InviaCampagnaEmail` job: idempotente via `campagna_invii.stato`; non reinvia se già `inviata`. Delay Laravel via `->delay()` al momento pianificato.
+- `CrmNota`: tabella `crm_note` con SoftDeletes; tipi: nota|chiamata|email|appuntamento|altro.
+- `campagne_email` + `campagna_invii`: traccia lifecycle completo invii per cliente; `totale_destinatari`, `totale_inviati`, `totale_errori` aggiornati al completamento job.
+- `notifiche_log` esteso con colonne `sottotipo` (varchar) e `campagna_email_id` (FK nullable) — migration 160006.
+- Badge menu CRM: count clienti `a_rischio`, cache 60 min (non per-utente ma globale), aggiornato in `MenuBadgesController`.
+- `EmailTemplateService::compilaManuale()`: aggiunto per campagne (oggetto+corpo diretti, senza settings key).
+- Test: `CrmStep16Test` — unit segmentazione (nuovo/perso/a_rischio/attivo), campagna solo consensati, job compleanno, filtro segmento, nota CRM, route access.
+
+## Route Step 15
+
+```
+GET  /acquisti/ordini                    → acquisti.ordini              (admin, accettatore)
+GET  /acquisti/ordini/crea               → acquisti.ordini.create       (admin, accettatore)
+GET  /acquisti/ordini/{id}               → acquisti.ordini.show         (admin, accettatore)
+GET  /acquisti/ordini/{id}/ricevi        → acquisti.ordini.ricevi       (admin, accettatore)
+GET  /acquisti/genera-ordini             → acquisti.genera-ordini       (admin, accettatore)
+GET  /acquisti/fatture                   → acquisti.fatture             (admin, cassa)
+```
+
+## Note architetturali Step 15
+
+- `OrdineFornitore`: numerazione `ORD-YYYY-NNNN` gestita da `NumerazioneService::prossimoOrdineFornitore()` — metodo aggiunto al service (query su tabella dedicata, non `documenti`).
+- `RicezioneMerceAction`: in transaction crea DDT fornitore, aggiorna `quantita_ricevuta` su righe ordine, chiama `CaricoManualeAction` per ogni articolo, aggiorna stato ordine.
+- `PagamentoFornitoreObserver::created()`: crea automaticamente `prima_nota` di tipo `uscita`; usa `MetodoPagamentoFornitore::aMetodoPrimaNota()` per il mapping.
+- `FatturaAcquistoObserver::updated()`: al passaggio a stato `registrata` crea record in `registro_iva` con `tipo_registro = acquisti`; idempotente (controlla se già esiste).
+- `FatturaPAParser::parsaFatturaAcquisto()`: usa `SimpleXMLElement` nativo; gestisce FPR12 e FPA12 (strip namespace prefix via regex). Auto-match fornitore per P.IVA, auto-match articoli per codice (non standard in FPA, raramente valorizzato).
+- `MetodoPagamentoFornitore`: enum separato da `MetodoPagamento` perché include `Riba` non presente lato clienti; `aMetodoPrimaNota()` mappa a `MetodoPrimaNota` (Riba → Altro).
+- `fattura_acquisto_id` aggiunto a `registro_iva` come FK nullable — coesiste con `documento_id` (vendite).
+- `pagamento_fornitore_id` aggiunto a `prima_nota` come FK nullable — coesiste con `pagamento_id` (clienti).
+- Scadenziario: tab "Clienti" (esistente) + tab "Fornitori" (fatture acquisto `registrata` con scadenza).
+- Registro IVA: tab "Vendite" (esistente) + tab "Acquisti" (fatture acquisto `registrata|pagata`).
+- `GeneraOrdiniDaSottoscorta`: raggruppa articoli sotto scorta per `fornitore_id`, genera un ordine per fornitore.
+- Import XML ZIP: `FatturaPAParser::parsaZip()` estrae tutti gli XML dal ZIP in tmp dir, li parsa uno per uno.
+- Test: `AcquistiStep15Test` — parser XML fixture, ricezione parziale/completa, prima nota uscita, registro IVA acquisti, route access.
+
 ## Route Step 14
 
 ```

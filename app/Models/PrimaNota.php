@@ -23,6 +23,7 @@ class PrimaNota extends Model
         'conto',
         'documento_id',
         'pagamento_id',
+        'pagamento_fornitore_id',
         'fornitore_id',
         'note',
         'automatico',

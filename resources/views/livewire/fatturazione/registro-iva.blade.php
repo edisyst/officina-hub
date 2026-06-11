@@ -1,7 +1,7 @@
 <div>
   <div class="card card-outline card-secondary">
     <div class="card-header">
-      <h3 class="card-title"><i class="fas fa-book mr-2"></i>Registro IVA Vendite</h3>
+      <h3 class="card-title"><i class="fas fa-book mr-2"></i>Registro IVA</h3>
       <div class="card-tools">
         <a href="{{ route('contabilita.riepilogo') }}" class="btn btn-sm btn-outline-primary mr-1">
           <i class="fas fa-calculator mr-1"></i> Export commercialista
@@ -10,6 +10,24 @@
           <i class="fas fa-file-csv mr-1"></i> Esporta CSV
         </button>
       </div>
+    </div>
+
+    {{-- Tab selezione --}}
+    <div class="card-header p-0 border-bottom-0">
+      <ul class="nav nav-tabs" id="tabRegistroIva">
+        <li class="nav-item">
+          <a class="nav-link {{ $tab === 'vendite' ? 'active' : '' }}"
+             wire:click="$set('tab','vendite')" href="#" role="tab">
+            <i class="fas fa-arrow-up text-success mr-1"></i> Vendite
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {{ $tab === 'acquisti' ? 'active' : '' }}"
+             wire:click="$set('tab','acquisti')" href="#" role="tab">
+            <i class="fas fa-arrow-down text-danger mr-1"></i> Acquisti
+          </a>
+        </li>
+      </ul>
     </div>
 
     <div class="card-header bg-light py-2">
@@ -46,7 +64,7 @@
             <tr>
               <th>Data</th>
               <th>Numero</th>
-              <th>Cliente</th>
+              <th>{{ $tab === 'vendite' ? 'Cliente' : 'Fornitore' }}</th>
               <th>P.IVA / C.F.</th>
               <th class="text-right">Aliquota %</th>
               <th>Natura</th>

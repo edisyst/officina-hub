@@ -259,6 +259,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('contabilita.export-sdi-batch');
     });
 
+    // Acquisti (admin + accettatore per ordini; admin + cassa per fatture)
+    Route::middleware('role:admin|accettatore')->group(function () {
+        Route::get('/acquisti/ordini', fn() => view('acquisti.ordini'))
+            ->name('acquisti.ordini');
+        Route::get('/acquisti/ordini/crea', fn() => view('acquisti.dettaglio-ordine'))
+            ->name('acquisti.ordini.create');
+        Route::get('/acquisti/ordini/{ordine}', fn($ordine) => view('acquisti.dettaglio-ordine', ['ordineId' => $ordine]))
+            ->name('acquisti.ordini.show');
+        Route::get('/acquisti/ordini/{ordine}/ricevi', fn($ordine) => view('acquisti.ricevi', ['ordineId' => $ordine]))
+            ->name('acquisti.ordini.ricevi');
+        Route::get('/acquisti/genera-ordini', fn() => view('acquisti.genera-ordini'))
+            ->name('acquisti.genera-ordini');
+    });
+
+    Route::middleware('role:admin|cassa')->group(function () {
+        Route::get('/acquisti/fatture', fn() => view('acquisti.fatture'))
+            ->name('acquisti.fatture');
+    });
+
     // Fatturazione (admin + cassa)
     Route::middleware('role:admin|cassa')->group(function () {
         Route::get('/fatturazione/documenti', fn() => view('fatturazione.documenti'))
@@ -302,6 +321,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('deposito.etichette-multiple');
         Route::get('/deposito/qr/{codice}', [DepositoController::class, 'cercaQr'])
             ->name('deposito.qr');
+    });
+
+    // CRM
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/crm/dashboard', fn() => view('crm.dashboard'))->name('crm.dashboard');
+        Route::get('/crm/campagne', fn() => view('crm.campagne'))->name('crm.campagne');
     });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

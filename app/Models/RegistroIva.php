@@ -11,6 +11,7 @@ class RegistroIva extends Model
 
     protected $fillable = [
         'documento_id',
+        'fattura_acquisto_id',
         'tipo_registro',
         'data_registrazione',
         'numero_documento',

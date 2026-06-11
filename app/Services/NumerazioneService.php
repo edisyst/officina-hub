@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Documento;
+use App\Models\OrdineFornitore;
 use Illuminate\Support\Facades\DB;
 
 class NumerazioneService
@@ -16,6 +17,19 @@ class NumerazioneService
         return DB::transaction(function () use ($tipo, $anno) {
             $ultimo = Documento::withTrashed()
                 ->where('tipo', $tipo)
+                ->where('anno', $anno)
+                ->lockForUpdate()
+                ->max('progressivo');
+
+            return ($ultimo ?? 0) + 1;
+        });
+    }
+
+    /** Prossimo progressivo per ordini fornitore (tabella dedicata). */
+    public function prossimoOrdineFornitore(int $anno): int
+    {
+        return DB::transaction(function () use ($anno) {
+            $ultimo = OrdineFornitore::withTrashed()
                 ->where('anno', $anno)
                 ->lockForUpdate()
                 ->max('progressivo');
