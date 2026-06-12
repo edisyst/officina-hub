@@ -86,7 +86,7 @@ class DashboardRetention extends Component
             DB::raw('COUNT(*) as totale')
         )
             ->where('created_at', '>=', now()->subMonths(12)->startOfMonth())
-            ->groupBy('anno', 'mese')
+            ->groupBy(DB::raw($this->yearExpr()), DB::raw($this->monthExpr()))
             ->orderBy('anno')
             ->orderBy('mese')
             ->get();

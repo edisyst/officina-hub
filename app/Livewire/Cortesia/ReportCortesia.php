@@ -5,6 +5,7 @@ namespace App\Livewire\Cortesia;
 use App\Enums\StatoPrestito;
 use App\Models\PrestitoCortesia;
 use App\Models\VeicoloCortesia;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class ReportCortesia extends Component
@@ -83,7 +84,7 @@ class ReportCortesia extends Component
             ->get();
 
         $anni = PrestitoCortesia::selectRaw('YEAR(data_consegna) as anno')
-            ->groupBy('anno')
+            ->groupBy(DB::raw('YEAR(data_consegna)'))
             ->orderByDesc('anno')
             ->pluck('anno');
 

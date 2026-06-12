@@ -104,7 +104,7 @@ class KpiService
                     DB::raw("{$meseExpr} as mese"),
                     DB::raw('SUM(totale) as totale')
                 )
-                ->groupBy('anno', 'mese')
+                ->groupBy(DB::raw($annoExpr), DB::raw($meseExpr))
                 ->orderBy('anno')
                 ->orderBy('mese')
                 ->get()
@@ -133,7 +133,7 @@ class KpiService
                     DB::raw("{$meseExpr} as mese"),
                     DB::raw('SUM(totale) as totale')
                 )
-                ->groupBy('anno', 'mese')
+                ->groupBy(DB::raw($annoExpr), DB::raw($meseExpr))
                 ->orderBy('anno')
                 ->orderBy('mese')
                 ->get()
@@ -257,20 +257,20 @@ class KpiService
     {
         $key = 'kpi_art_consumati_' . $da->format('Ymd') . '_' . $a->format('Ymd') . '_' . $limit;
         return Cache::remember($key, 600, function () use ($da, $a, $limit) {
-            return DB::table('movimento_magazzino')
-                ->join('articoli', 'articoli.id', '=', 'movimento_magazzino.articolo_id')
-                ->leftJoin('categoria_articoli', 'categoria_articoli.id', '=', 'articoli.categoria_articolo_id')
-                ->where('movimento_magazzino.tipo', TipoMovimento::Scarico->value)
-                ->whereBetween('movimento_magazzino.created_at', [$da, $a])
+            return DB::table('movimenti_magazzino')
+                ->join('articoli', 'articoli.id', '=', 'movimenti_magazzino.articolo_id')
+                ->leftJoin('categorie_articoli', 'categorie_articoli.id', '=', 'articoli.categoria_articolo_id')
+                ->where('movimenti_magazzino.tipo', TipoMovimento::Scarico->value)
+                ->whereBetween('movimenti_magazzino.created_at', [$da, $a])
                 ->select(
                     'articoli.id',
                     'articoli.codice',
                     'articoli.descrizione',
-                    DB::raw("COALESCE(categoria_articoli.nome, 'N/A') as categoria"),
-                    DB::raw('SUM(movimento_magazzino.quantita) as quantita_scaricata'),
-                    DB::raw('SUM(movimento_magazzino.quantita * movimento_magazzino.prezzo_unitario) as valore_scaricato')
+                    DB::raw("COALESCE(categorie_articoli.nome, 'N/A') as categoria"),
+                    DB::raw('SUM(movimenti_magazzino.quantita) as quantita_scaricata'),
+                    DB::raw('SUM(movimenti_magazzino.quantita * movimenti_magazzino.prezzo_unitario) as valore_scaricato')
                 )
-                ->groupBy('articoli.id', 'articoli.codice', 'articoli.descrizione', 'categoria_articoli.nome')
+                ->groupBy('articoli.id', 'articoli.codice', 'articoli.descrizione', 'categorie_articoli.nome')
                 ->orderByDesc('quantita_scaricata')
                 ->limit($limit)
                 ->get()
