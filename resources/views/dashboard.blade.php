@@ -7,7 +7,7 @@
     <div class="col-lg-3 col-6">
       <div class="small-box bg-info">
         <div class="inner">
-          <h3>{{ \App\Models\Commessa::whereIn('stato', ['bozza','accettata','in_lavorazione'])->count() }}</h3>
+          <h3>{{ $commesseAperte }}</h3>
           <p>Commesse Aperte</p>
         </div>
         <div class="icon"><i class="fas fa-clipboard-list"></i></div>
@@ -17,7 +17,7 @@
     <div class="col-lg-3 col-6">
       <div class="small-box bg-success">
         <div class="inner">
-          <h3>{{ \App\Models\Commessa::where('stato', 'completata')->count() }}</h3>
+          <h3>{{ $commessePronte }}</h3>
           <p>Pronte per Consegna</p>
         </div>
         <div class="icon"><i class="fas fa-check-circle"></i></div>
@@ -27,7 +27,7 @@
     <div class="col-lg-3 col-6">
       <div class="small-box bg-warning">
         <div class="inner">
-          <h3>{{ \App\Models\Cliente::count() }}</h3>
+          <h3>{{ $totaleClienti }}</h3>
           <p>Clienti Attivi</p>
         </div>
         <div class="icon"><i class="fas fa-users"></i></div>
@@ -37,7 +37,7 @@
     <div class="col-lg-3 col-6">
       <div class="small-box bg-danger">
         <div class="inner">
-          <h3>{{ \App\Models\Veicolo::count() }}</h3>
+          <h3>{{ $totaleVeicoli }}</h3>
           <p>Veicoli Registrati</p>
         </div>
         <div class="icon"><i class="fas fa-car"></i></div>
@@ -67,7 +67,7 @@
               </tr>
             </thead>
             <tbody>
-              @foreach(\App\Models\Commessa::with(['cliente','veicolo'])->latest('data_ingresso')->limit(10)->get() as $c)
+              @foreach($ultimeCommesse as $c)
               <tr>
                 <td><a href="{{ route('commesse.show', $c->id) }}">{{ $c->numero }}</a></td>
                 <td>{{ $c->cliente->nome_completo }}</td>
@@ -88,10 +88,9 @@
         </div>
         <div class="card-body">
           @foreach(\App\Enums\StatoCommessa::cases() as $stato)
-          @php $count = \App\Models\Commessa::where('stato', $stato->value)->count() @endphp
           <div class="d-flex justify-content-between mb-2">
             <span class="badge {{ $stato->badgeClass() }} p-2">{{ $stato->label() }}</span>
-            <strong>{{ $count }}</strong>
+            <strong>{{ $conteggioPerStato[$stato->value] ?? 0 }}</strong>
           </div>
           @endforeach
         </div>

@@ -29,6 +29,7 @@ class CrmStep16Test extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        Carbon::setTestNow(Carbon::parse('2026-06-12 10:00:00'));
         Cache::flush();
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
         foreach (['admin', 'accettatore', 'meccanico', 'cassa'] as $r) {
@@ -36,6 +37,12 @@ class CrmStep16Test extends TestCase
         }
         $this->admin = User::factory()->create();
         $this->admin->assignRole('admin');
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+        parent::tearDown();
     }
 
     // --- SegmentazioneService unit tests ---

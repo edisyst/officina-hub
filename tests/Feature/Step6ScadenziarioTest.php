@@ -36,6 +36,7 @@ class Step6ScadenziarioTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        Carbon::setTestNow(Carbon::parse('2026-06-12 10:00:00'));
 
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
@@ -73,6 +74,12 @@ class Step6ScadenziarioTest extends TestCase
             'descrizione_cliente' => 'Test intervento',
             'user_id'             => $this->admin->id,
         ]);
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+        parent::tearDown();
     }
 
     // --- EmailTemplateService ---

@@ -18,6 +18,7 @@ use App\Models\Cliente;
 use App\Models\User;
 use App\Models\Veicolo;
 use Database\Seeders\RuoliSeeder;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
@@ -34,6 +35,7 @@ class GaranzieStep17Test extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        Carbon::setTestNow(Carbon::parse('2026-06-12 10:00:00'));
         Cache::flush();
 
         $this->seed(RuoliSeeder::class);
@@ -75,6 +77,12 @@ class GaranzieStep17Test extends TestCase
             'ragione_sociale' => 'FCA Italy S.p.A.',
             'partita_iva'     => '00536750164',
         ]);
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+        parent::tearDown();
     }
 
     /** Garanzia attiva su veicolo: creazione e scope attive */

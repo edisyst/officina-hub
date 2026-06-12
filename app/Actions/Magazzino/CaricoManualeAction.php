@@ -25,8 +25,7 @@ class CaricoManualeAction
         ?string $note = null,
     ): MovimentoMagazzino {
         return DB::transaction(function () use ($articolo, $tipo, $quantita, $utente, $prezzoUnitario, $documentoFornitore, $dataDocumento, $note) {
-            $articolo->lockForUpdate()->find($articolo->id);
-            $articolo->refresh();
+            $articolo = Articolo::lockForUpdate()->find($articolo->id);
 
             $giacenzaPrecedente = $articolo->giacenza_attuale;
 

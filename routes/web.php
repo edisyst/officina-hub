@@ -14,6 +14,7 @@ use App\Http\Controllers\FatturazioneController;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\PortaleClienteController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\QrCodeController;
 use App\Http\Controllers\SettingsController;
 use App\Models\ChecklistTemplate;
@@ -27,7 +28,7 @@ Route::get('/', fn() => redirect()->route('login'));
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    Route::get('/dashboard', fn() => view('analytics.dashboard'))->name('dashboard');
+    Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     // Analytics
     Route::get('/analytics/meccanici', fn() => view('analytics.meccanici'))

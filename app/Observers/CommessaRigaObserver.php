@@ -8,7 +8,7 @@ class CommessaRigaObserver
 {
     public function saved(CommessaRiga $riga): void
     {
-        $this->aggiornaflag($riga);
+        $this->aggiornaFlag($riga);
     }
 
     public function deleted(CommessaRiga $riga): void

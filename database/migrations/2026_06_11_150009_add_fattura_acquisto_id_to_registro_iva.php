@@ -23,6 +23,7 @@ return new class extends Migration
         Schema::table('registro_iva', function (Blueprint $table) {
             $table->dropForeign(['fattura_acquisto_id']);
             $table->dropColumn('fattura_acquisto_id');
+            $table->foreignId('documento_id')->nullable(false)->change();
         });
     }
 };

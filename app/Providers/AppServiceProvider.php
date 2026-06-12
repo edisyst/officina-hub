@@ -99,7 +99,7 @@ class AppServiceProvider extends ServiceProvider
         FatturaAcquisto::observe(FatturaAcquistoObserver::class);
 
         // Applica configurazione SMTP da DB (solo se non in console/test per evitare query)
-        if (! $this->app->runningInConsole() || $this->app->environment('testing') === false) {
+        if (! $this->app->runningInConsole() && ! $this->app->environment('testing')) {
             try {
                 app(MailConfigService::class)->applica();
             } catch (\Throwable) {
