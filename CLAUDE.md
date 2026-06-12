@@ -73,6 +73,29 @@ php artisan test --testsuite=Feature
 php artisan test --filter CommessaFlussoTest
 ```
 
+## Route Step 17
+
+```
+GET  /garanzie/report            → garanzie.report       (admin, cassa) — report rimborsi per casa madre
+GET  /impostazioni/case-madri    → impostazioni.case-madri (admin) — CRUD case madri costruttori
+```
+
+## Note architetturali Step 17
+
+- `CasaMadre`: azienda costruttrice/importatrice verso cui si fatturano gli interventi in garanzia; SoftDeletes; campi SDI (`codice_destinatario_sdi`, `pec`) per FatturaPA.
+- `Garanzia`: per-veicolo con `data_fine`, `km_fine`, `numero_pratica`, `attiva`; scope `attive()` filtra per `attiva=true` e `data_fine >= oggi`; `isInScadenza()` → `data_fine <= now()->addDays(30)`.
+- `TipoGaranzia` enum: `GaranziaCostruttore|GaranziaUsato|GaranziaRiparazione|GaranziaRicambio|Convenzione`; `richiedeCasaMadre()` true per Costruttore e Convenzione.
+- `CommessaRiga`: aggiunto `in_garanzia` (bool), `garanzia_id` FK nullable, `casa_madre_id` FK nullable. Accessor `totale_cliente` = 0 se in_garanzia; `totale_casa_madre` = totale se in_garanzia.
+- `Commessa`: aggiunto `ha_righe_garanzia` (bool, aggiornato da observer); accessor `totale_cliente` e `totale_casa_madre` sommano le righe.
+- `CommessaRigaObserver`: aggiorna `ha_righe_garanzia` su commessa ad ogni `saved`/`deleted` riga.
+- `GeneraFatturaGaranziaAction::execute()`: in transaction crea 1 fattura cliente (righe non-garanzia) + 1 fattura per casa madre per ogni `casa_madre_id` unico nelle righe in garanzia; usa `NumerazioneService::prossimo()` per ogni documento; `documento_correlato_id` collega casa-madre a cliente.
+- `TipoEmissione::CasaMadre` ('casa_madre') aggiunto all'enum; il template FatturaPA usa i dati `CasaMadre` nel blocco `CessionarioCommittente` se `$documento->casaMadre` presente.
+- `Documento`: aggiunto `casa_madre_id` FK nullable, `tipo_emissione_garanzia` string nullable.
+- Page views usano `<x-app-layout>` (non `@extends`) perché `layouts/app.blade.php` usa `{{ $slot }}`.
+- Seeder `CaseMadriSeeder`: 5 placeholder (FCA, BMW, Mercedes, VW, Renault).
+- Alert scadenza garanzia 30 gg: visibile nel tab Garanzie di `DettaglioVeicolo` e nell'header di `DettaglioCommessa`.
+- Test: `GaranzieStep17Test` — 14 test: garanzia attiva/in_scadenza/scaduta, totali riga, observer ha_righe_garanzia, GeneraFatturaGaranziaAction 2 docs, no-garanzia exception, route access, multi-casa-madre 3 docs, XML FatturaPA casa madre.
+
 ## Route Step 16
 
 ```

@@ -323,6 +323,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('deposito.qr');
     });
 
+    // Garanzie
+    Route::middleware('role:admin|cassa')->group(function () {
+        Route::get('/garanzie/report', fn() => view('garanzie.report'))->name('garanzie.report');
+    });
+
+    // Case madri (solo admin, in impostazioni)
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/impostazioni/case-madri', fn() => view('impostazioni.case-madri'))->name('impostazioni.case-madri');
+    });
+
     // CRM
     Route::middleware('role:admin')->group(function () {
         Route::get('/crm/dashboard', fn() => view('crm.dashboard'))->name('crm.dashboard');

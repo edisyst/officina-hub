@@ -38,6 +38,12 @@
           @if($riga->articolo)
           <small class="text-muted ml-1">[{{ $riga->articolo->codice }}]</small>
           @endif
+          @if($riga->in_garanzia)
+          <span class="badge badge-warning ml-1"><i class="fas fa-shield-alt mr-1"></i>Garanzia</span>
+          @if($riga->casaMadre)
+          <small class="text-muted ml-1">{{ $riga->casaMadre->ragione_sociale }}</small>
+          @endif
+          @endif
         </div>
         @if($riga->tipo->value !== 'nota')
         <div class="col-md-1 text-right">{{ $riga->quantita }} ×</div>
@@ -70,15 +76,18 @@
 
   <!-- Totali -->
   @if($righe->where('tipo.value', '!=', 'nota')->count() > 0)
+  @php
+    $imponibile     = $righe->sum(fn($r) => $r->imponibile);
+    $iva            = $righe->sum(fn($r) => $r->iva);
+    $totCliente     = $righe->sum(fn($r) => $r->totale_cliente);
+    $totCasaMadre   = $righe->sum(fn($r) => $r->totale_casa_madre);
+    $haGaranzia     = $righe->where('in_garanzia', true)->count() > 0;
+  @endphp
   <div class="card card-body bg-light mt-3">
     <div class="row">
-      <div class="col-md-6 offset-md-6">
-        @php
-          $imponibile = $righe->sum(fn($r) => $r->imponibile);
-          $iva = $righe->sum(fn($r) => $r->iva);
-        @endphp
+      <div class="{{ $haGaranzia ? 'col-md-5 offset-md-2' : 'col-md-6 offset-md-6' }}">
         <table class="table table-sm table-borderless mb-0">
-          <tr><td>Imponibile</td><td class="text-right">€ {{ number_format($imponibile, 2, ',', '.') }}</td></tr>
+          <tr><td>Imponibile totale</td><td class="text-right">€ {{ number_format($imponibile, 2, ',', '.') }}</td></tr>
           <tr><td>IVA</td><td class="text-right">€ {{ number_format($iva, 2, ',', '.') }}</td></tr>
           <tr class="font-weight-bold border-top">
             <td>Totale</td>
@@ -86,6 +95,20 @@
           </tr>
         </table>
       </div>
+      @if($haGaranzia)
+      <div class="col-md-5">
+        <table class="table table-sm table-borderless mb-0">
+          <tr class="text-success font-weight-bold">
+            <td><i class="fas fa-user mr-1"></i>A carico cliente</td>
+            <td class="text-right">€ {{ number_format($totCliente, 2, ',', '.') }}</td>
+          </tr>
+          <tr class="text-warning font-weight-bold">
+            <td><i class="fas fa-building mr-1"></i>A carico casa madre</td>
+            <td class="text-right">€ {{ number_format($totCasaMadre, 2, ',', '.') }}</td>
+          </tr>
+        </table>
+      </div>
+      @endif
     </div>
   </div>
   @endif
@@ -203,6 +226,52 @@
             <label>IVA %</label>
             <input wire:model="iva_percentuale" type="number" step="0.01" class="form-control">
           </div>
+
+          <!-- Garanzia -->
+          <div class="form-group">
+            <div class="custom-control custom-switch">
+              <input type="checkbox" class="custom-control-input" id="in_garanzia_toggle"
+                wire:model.live="inGaranzia">
+              <label class="custom-control-label font-weight-bold" for="in_garanzia_toggle">
+                <i class="fas fa-shield-alt mr-1 text-warning"></i>Intervento in garanzia
+              </label>
+            </div>
+            <small class="text-muted">Se attivato, il prezzo non viene addebitato al cliente ma fatturato alla casa madre.</small>
+          </div>
+
+          @if($inGaranzia)
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Garanzia collegata</label>
+                <select wire:model="garanziaId" class="form-control form-control-sm">
+                  <option value="">— Seleziona garanzia —</option>
+                  @foreach($garanzieAttive as $g)
+                  <option value="{{ $g->id }}">{{ $g->tipo->label() }} — {{ $g->descrizione }}
+                    @if($g->numero_pratica) [{{ $g->numero_pratica }}]@endif</option>
+                  @endforeach
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Casa Madre da fatturare</label>
+                <select wire:model="casaMadreId" class="form-control form-control-sm">
+                  <option value="">— Nessuna (garanzia interna) —</option>
+                  @foreach($caseMadri as $cm)
+                  <option value="{{ $cm->id }}">{{ $cm->ragione_sociale }}</option>
+                  @endforeach
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="alert alert-warning py-1 px-2 mb-0">
+            <small><i class="fas fa-info-circle mr-1"></i>
+              Il prezzo unitario rimarrà visibile per la fatturazione alla casa madre.
+              Il cliente vedrà questa riga come <strong>gratuita</strong>.
+            </small>
+          </div>
+          @endif
           @endif
         </div>
         <div class="modal-footer">

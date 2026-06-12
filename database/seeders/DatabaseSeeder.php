@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             DviCategorieSeeder::class,
             TariffeManodoperaSeeder::class,
             PacchettiServizioSeeder::class,
+            CaseMadriSeeder::class,
         ]);
     }
 }

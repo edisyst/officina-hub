@@ -9,8 +9,11 @@ echo '<?xml version="1.0" encoding="UTF-8"?>';
 $piva            = preg_replace('/[^0-9A-Z]/', '', strtoupper($settings['officina_piva'] ?? '00000000000'));
 $progressivo     = str_pad($documento->progressivo, 5, '0', STR_PAD_LEFT);
 $cliente         = $documento->cliente;
-$isGiuridica     = $cliente->tipo->value === 'giuridica';
-$codiceDestin    = $cliente->codice_destinatario_sdi ?: '0000000';
+$casaMadre       = $documento->casaMadre ?? null;
+$isGiuridica     = $casaMadre ? true : ($cliente->tipo->value === 'giuridica');
+$codiceDestin    = $casaMadre
+    ? ($casaMadre->codice_destinatario_sdi ?: '0000000')
+    : ($cliente->codice_destinatario_sdi ?: '0000000');
 $regimeFiscale   = $settings['fatturapa_regime_fiscale'] ?? 'RF01';
 $esigibilitaIVA  = $settings['fatturapa_esigibilita_iva'] ?? 'I';
 $tipoDoc         = $documento->tipo->codiceFatturaPA();
@@ -37,8 +40,10 @@ $ibanOfficina    = $settings['fatturapa_iban'] ?? null;
       <ProgressivoInvio>{!! e($progressivo) !!}</ProgressivoInvio>
       <FormatoTrasmissione>FPR12</FormatoTrasmissione>
       <CodiceDestinatario>{!! e($codiceDestin) !!}</CodiceDestinatario>
-@if(empty($cliente->codice_destinatario_sdi) && !empty($cliente->pec_sdi))
+@if(!$casaMadre && empty($cliente->codice_destinatario_sdi) && !empty($cliente->pec_sdi))
       <PECDestinatario>{!! e($cliente->pec_sdi) !!}</PECDestinatario>
+@elseif($casaMadre && empty($casaMadre->codice_destinatario_sdi) && !empty($casaMadre->pec))
+      <PECDestinatario>{!! e($casaMadre->pec) !!}</PECDestinatario>
 @endif
     </DatiTrasmissione>
     <CedentePrestatore>
@@ -67,6 +72,17 @@ $ibanOfficina    = $settings['fatturapa_iban'] ?? null;
     </CedentePrestatore>
     <CessionarioCommittente>
       <DatiAnagrafici>
+@if($casaMadre)
+@if(!empty($casaMadre->partita_iva))
+        <IdFiscaleIVA>
+          <IdPaese>IT</IdPaese>
+          <IdCodice>{!! e(preg_replace('/[^0-9A-Z]/', '', strtoupper($casaMadre->partita_iva))) !!}</IdCodice>
+        </IdFiscaleIVA>
+@endif
+        <Anagrafica>
+          <Denominazione>{!! e($casaMadre->ragione_sociale) !!}</Denominazione>
+        </Anagrafica>
+@else
 @if($isGiuridica && !empty($cliente->partita_iva))
         <IdFiscaleIVA>
           <IdPaese>IT</IdPaese>
@@ -83,13 +99,20 @@ $ibanOfficina    = $settings['fatturapa_iban'] ?? null;
           <Cognome>{!! e($cliente->cognome) !!}</Cognome>
 @endif
         </Anagrafica>
+@endif
       </DatiAnagrafici>
       <Sede>
+@if($casaMadre)
+        <Indirizzo>ND</Indirizzo>
+        <CAP>00000</CAP>
+        <Comune>ND</Comune>
+@else
         <Indirizzo>{!! e($cliente->indirizzo ?: 'ND') !!}</Indirizzo>
         <CAP>{!! e($cliente->cap ?: '00000') !!}</CAP>
         <Comune>{!! e($cliente->citta ?: 'ND') !!}</Comune>
 @if(!empty($cliente->provincia))
         <Provincia>{!! e(strtoupper(substr($cliente->provincia, 0, 2))) !!}</Provincia>
+@endif
 @endif
         <Nazione>IT</Nazione>
       </Sede>

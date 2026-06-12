@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class CommessaRiga extends Model
 {
+
     protected $table = 'commessa_righe';
 
     protected $fillable = [
@@ -22,6 +23,9 @@ class CommessaRiga extends Model
         'sconto_percentuale',
         'iva_percentuale',
         'ordinamento',
+        'in_garanzia',
+        'garanzia_id',
+        'casa_madre_id',
     ];
 
     protected function casts(): array
@@ -33,6 +37,7 @@ class CommessaRiga extends Model
             'prezzo_acquisto'    => 'decimal:2',
             'sconto_percentuale' => 'decimal:2',
             'iva_percentuale'    => 'decimal:2',
+            'in_garanzia'        => 'boolean',
         ];
     }
 
@@ -56,6 +61,16 @@ class CommessaRiga extends Model
         return $this->belongsTo(PacchettoServizio::class, 'pacchetto_servizio_id');
     }
 
+    public function garanzia()
+    {
+        return $this->belongsTo(Garanzia::class);
+    }
+
+    public function casaMadre()
+    {
+        return $this->belongsTo(CasaMadre::class);
+    }
+
     public function getImponibileAttribute(): float
     {
         $importo = (float) $this->quantita * (float) $this->prezzo_unitario;
@@ -70,5 +85,17 @@ class CommessaRiga extends Model
     public function getTotaleAttribute(): float
     {
         return $this->imponibile + $this->iva;
+    }
+
+    /** Totale a carico del cliente: zero se la riga è in garanzia */
+    public function getTotaleClienteAttribute(): float
+    {
+        return $this->in_garanzia ? 0.0 : $this->totale;
+    }
+
+    /** Totale a carico della casa madre: prezzo pieno se riga in garanzia */
+    public function getTotaleCasaMadreAttribute(): float
+    {
+        return $this->in_garanzia ? $this->totale : 0.0;
     }
 }

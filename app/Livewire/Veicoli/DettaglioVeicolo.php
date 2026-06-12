@@ -30,6 +30,12 @@ class DettaglioVeicolo extends Component
             ->where('stato', 'in_deposito')
             ->count();
 
-        return view('livewire.veicoli.dettaglio-veicolo', compact('proprietari', 'commesse', 'countPneumaticiDeposito'));
+        $countGaranzieAttive = $this->veicolo->garanzie()->attive()->count();
+        $garanzieInScadenza  = $this->veicolo->garanzie()->attive()->get()->filter(fn($g) => $g->isInScadenza());
+
+        return view('livewire.veicoli.dettaglio-veicolo', compact(
+            'proprietari', 'commesse', 'countPneumaticiDeposito',
+            'countGaranzieAttive', 'garanzieInScadenza'
+        ));
     }
 }

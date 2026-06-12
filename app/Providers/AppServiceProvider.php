@@ -7,6 +7,7 @@ use App\Models\Appuntamento;
 use App\Models\Articolo;
 use App\Models\Cliente;
 use App\Models\Commessa;
+use App\Models\CommessaRiga;
 use App\Models\CompagniaAssicurativa;
 use App\Models\Documento;
 use App\Models\FatturaAcquisto;
@@ -22,6 +23,7 @@ use App\Models\Sinistro;
 use App\Models\Veicolo;
 use App\Models\VeicoloCortesia;
 use App\Observers\CommessaObserver;
+use App\Observers\CommessaRigaObserver;
 use App\Observers\DocumentoObserver;
 use App\Observers\FatturaAcquistoObserver;
 use App\Observers\PagamentoObserver;
@@ -90,6 +92,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Commessa::observe(CommessaObserver::class);
+        CommessaRiga::observe(CommessaRigaObserver::class);
         Documento::observe(DocumentoObserver::class);
         Pagamento::observe(PagamentoObserver::class);
         PagamentoFornitore::observe(PagamentoFornitoreObserver::class);

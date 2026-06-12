@@ -39,6 +39,8 @@ class Documento extends Model
         'sinistro_id',
         'tipo_emissione',
         'documento_correlato_id',
+        'casa_madre_id',
+        'tipo_emissione_garanzia',
     ];
 
     protected function casts(): array
@@ -112,6 +114,11 @@ class Documento extends Model
     public function documentiCorrelati()
     {
         return $this->hasMany(Documento::class, 'documento_correlato_id');
+    }
+
+    public function casaMadre()
+    {
+        return $this->belongsTo(CasaMadre::class);
     }
 
     public function getTotalePagatoAttribute(): float

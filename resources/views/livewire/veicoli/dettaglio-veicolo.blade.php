@@ -56,6 +56,15 @@
             @endif
           </a>
         </li>
+        <li class="nav-item">
+          <a href="#" wire:click.prevent="$set('tabAttiva', 'garanzie')"
+             class="nav-link {{ $tabAttiva === 'garanzie' ? 'active' : '' }}">
+            <i class="fas fa-shield-alt mr-1"></i>Garanzie
+            @if($countGaranzieAttive > 0)
+              <span class="badge badge-success ml-1">{{ $countGaranzieAttive }}</span>
+            @endif
+          </a>
+        </li>
       </ul>
 
       <div class="tab-content border border-top-0 p-3 bg-white">
@@ -113,6 +122,19 @@
 
         @if($tabAttiva === 'pneumatici')
         @livewire('pneumatici.gestione-pneumatici', ['veicoloId' => $veicolo->id], key('pneumatici-' . $veicolo->id))
+        @endif
+
+        @if($tabAttiva === 'garanzie')
+        {{-- Allerta garanzie in scadenza --}}
+        @foreach($garanzieInScadenza as $g)
+        <div class="alert alert-warning py-2 mb-2">
+          <i class="fas fa-exclamation-triangle mr-1"></i>
+          Garanzia in scadenza: <strong>{{ $g->descrizione }}</strong>
+          — scade il {{ $g->data_fine->format('d/m/Y') }}
+          (tra {{ $g->data_fine->diffInDays(now()) }} giorni)
+        </div>
+        @endforeach
+        @livewire('garanzie.gestione-garanzie', ['veicoloId' => $veicolo->id], key('garanzie-' . $veicolo->id))
         @endif
       </div>
     </div>

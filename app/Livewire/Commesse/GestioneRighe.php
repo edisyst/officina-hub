@@ -5,8 +5,10 @@ namespace App\Livewire\Commesse;
 use App\Actions\Commessa\ApplicaPacchettoAction;
 use App\Enums\TipoRiga;
 use App\Models\Articolo;
+use App\Models\CasaMadre;
 use App\Models\Commessa;
 use App\Models\CommessaRiga;
+use App\Models\Garanzia;
 use App\Models\PacchettoServizio;
 use App\Models\Setting;
 use App\Models\TariffaManodopera;
@@ -49,6 +51,11 @@ class GestioneRighe extends Component
     #[Rule('numeric|min:0|max:100')]
     public float $iva_percentuale = 22;
 
+    // Garanzia
+    public bool $inGaranzia      = false;
+    public ?int $garanziaId      = null;
+    public ?int $casaMadreId     = null;
+
     // Modal "Applica pacchetto"
     public bool $showPacchettoModal = false;
     public int $passoPacchetto = 1;
@@ -84,6 +91,9 @@ class GestioneRighe extends Component
                 'iva_percentuale'    => (float) $riga->iva_percentuale,
                 'articolo_id'        => $riga->articolo_id,
                 'tariffa_manodopera_id' => $riga->tariffa_manodopera_id,
+                'inGaranzia'         => (bool) $riga->in_garanzia,
+                'garanziaId'         => $riga->garanzia_id,
+                'casaMadreId'        => $riga->casa_madre_id,
             ]);
 
             if ($riga->articolo) {
@@ -99,7 +109,7 @@ class GestioneRighe extends Component
                 }
             }
         } else {
-            $this->reset(['tipo', 'descrizione', 'quantita', 'prezzo_unitario', 'sconto_percentuale', 'articolo_id', 'giacenzaDisponibile', 'tariffa_manodopera_id']);
+            $this->reset(['tipo', 'descrizione', 'quantita', 'prezzo_unitario', 'sconto_percentuale', 'articolo_id', 'giacenzaDisponibile', 'tariffa_manodopera_id', 'inGaranzia', 'garanziaId', 'casaMadreId']);
             $this->tipo = 'articolo';
             $this->quantita = 1;
             $this->prezzo_unitario = 0;
@@ -211,6 +221,9 @@ class GestioneRighe extends Component
             'prezzo_unitario'       => $this->prezzo_unitario,
             'sconto_percentuale'    => $this->sconto_percentuale,
             'iva_percentuale'       => $this->iva_percentuale,
+            'in_garanzia'           => $this->inGaranzia,
+            'garanzia_id'           => $this->inGaranzia ? $this->garanziaId : null,
+            'casa_madre_id'         => $this->inGaranzia ? $this->casaMadreId : null,
         ];
 
         if ($this->editingId) {
@@ -337,13 +350,29 @@ class GestioneRighe extends Component
         session()->flash('success', 'Pacchetto "' . $pacchetto->nome . '" applicato (' . count($this->righePreview) . ' righe create).');
     }
 
+    public function updatedInGaranzia(): void
+    {
+        if (! $this->inGaranzia) {
+            $this->garanziaId    = null;
+            $this->casaMadreId   = null;
+        }
+    }
+
     public function render()
     {
-        $righe = $this->commessa->righe()->with('articolo')->orderBy('ordinamento')->get();
+        $righe = $this->commessa->righe()->with(['articolo', 'garanzia', 'casaMadre'])->orderBy('ordinamento')->get();
+
+        $garanzieAttive = $this->commessa->veicolo
+            ? Garanzia::attive()->perVeicolo($this->commessa->veicolo->id)->with('casaMadre')->get()
+            : collect();
+
+        $caseMadri = CasaMadre::orderBy('ragione_sociale')->get();
 
         return view('livewire.commesse.gestione-righe', [
-            'righe'    => $righe,
-            'tipiRiga' => TipoRiga::cases(),
+            'righe'         => $righe,
+            'tipiRiga'      => TipoRiga::cases(),
+            'garanzieAttive'=> $garanzieAttive,
+            'caseMadri'     => $caseMadri,
         ]);
     }
 }

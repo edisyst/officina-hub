@@ -39,6 +39,7 @@ class Commessa extends Model
         'km_uscita',
         'note_accettazione_json',
         'dvi_approvazione_importo',
+        'ha_righe_garanzia',
     ];
 
     protected function casts(): array
@@ -47,10 +48,11 @@ class Commessa extends Model
             'tipo'                  => TipoCommessa::class,
             'stato'                 => StatoCommessa::class,
             'stato_carrozzeria'     => StatoCarrozzeria::class,
-            'data_ingresso'         => 'datetime',
-            'data_uscita_prevista'  => 'date',
-            'data_consegna'         => 'datetime',
-            'note_accettazione_json'=> 'array',
+            'data_ingresso'          => 'datetime',
+            'data_uscita_prevista'   => 'date',
+            'data_consegna'          => 'datetime',
+            'note_accettazione_json' => 'array',
+            'ha_righe_garanzia'      => 'boolean',
         ];
     }
 
@@ -160,6 +162,18 @@ class Commessa extends Model
     public function getTotaleLordoAttribute(): float
     {
         return $this->totale_imponibile + $this->totale_iva;
+    }
+
+    /** Totale commessa a carico cliente (righe in garanzia valgono 0) */
+    public function getTotaleClienteAttribute(): float
+    {
+        return $this->righe->sum(fn($r) => $r->totale_cliente);
+    }
+
+    /** Totale commessa a carico case madri (solo righe in garanzia) */
+    public function getTotaleCasaMadreAttribute(): float
+    {
+        return $this->righe->sum(fn($r) => $r->totale_casa_madre);
     }
 
     public function scopeSearch($query, string $term)

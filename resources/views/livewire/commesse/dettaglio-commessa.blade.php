@@ -122,6 +122,36 @@
     </div>
   </div>
 
+  {{-- Alert Garanzie Attive --}}
+  @if($garanzieAttive->count() > 0)
+  <div class="alert alert-warning mt-2 mb-2 py-2">
+    <i class="fas fa-shield-alt mr-2"></i>
+    <strong>Garanzie attive su questo veicolo:</strong>
+    @foreach($garanzieAttive as $g)
+    <span class="badge badge-warning ml-1">{{ $g->tipo->label() }}: {{ $g->descrizione }}
+      @if($g->numero_pratica) [{{ $g->numero_pratica }}]@endif
+    </span>
+    @endforeach
+    @hasanyrole('admin|cassa')
+    @if($commessa->ha_righe_garanzia)
+    <button wire:click="apriGaranziaFattura" class="btn btn-sm btn-warning ml-3">
+      <i class="fas fa-file-invoice-dollar mr-1"></i>Emetti Fattura Garanzia
+    </button>
+    @endif
+    @endhasanyrole
+  </div>
+  @elseif($commessa->ha_righe_garanzia)
+  <div class="alert alert-info mt-2 mb-2 py-2">
+    <i class="fas fa-shield-alt mr-2"></i>
+    Questa commessa ha righe in garanzia.
+    @hasanyrole('admin|cassa')
+    <button wire:click="apriGaranziaFattura" class="btn btn-sm btn-warning ml-2">
+      <i class="fas fa-file-invoice-dollar mr-1"></i>Emetti Fattura Garanzia
+    </button>
+    @endhasanyrole
+  </div>
+  @endif
+
   <!-- Tab Section -->
   <ul class="nav nav-tabs" id="commessaTabs">
     <li class="nav-item">
@@ -643,6 +673,49 @@
           <button type="button" class="btn btn-secondary" wire:click="$set('showStatoAccettazioneModal', false)">Annulla</button>
           <button type="button" class="btn btn-primary" wire:click="salvaStatoAccettazione">
             <i class="fas fa-save mr-1"></i>Salva
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  @endif
+
+  {{-- Modal Fattura Garanzia --}}
+  @if($showFatturaGaranziaModal)
+  <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-shield-alt text-warning mr-2"></i>Emetti Fattura Garanzia</h5>
+          <button type="button" class="close" wire:click="$set('showFatturaGaranziaModal', false)"><span>&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted small">Verranno create le seguenti fatture in bozza:</p>
+          <table class="table table-sm">
+            <tr class="table-light">
+              <td><i class="fas fa-user mr-1"></i>Fattura al cliente
+                ({{ $previewFatturaGaranzia['righe_cliente'] ?? 0 }} righe a pagamento)</td>
+              <td class="text-right font-weight-bold">
+                € {{ number_format($previewFatturaGaranzia['tot_cliente'] ?? 0, 2, ',', '.') }}
+              </td>
+            </tr>
+            @foreach($previewFatturaGaranzia['per_casa_madre'] ?? [] as $cm)
+            <tr class="table-warning">
+              <td>
+                <i class="fas fa-building mr-1"></i>Fattura a: <strong>{{ $cm['ragione_sociale'] }}</strong>
+                ({{ $cm['count_righe'] }} righe in garanzia)
+              </td>
+              <td class="text-right font-weight-bold">€ {{ number_format($cm['totale'], 2, ',', '.') }}</td>
+            </tr>
+            @endforeach
+          </table>
+          <p class="text-muted small">Tutte le fatture vengono create in stato <strong>Bozza</strong>.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" wire:click="$set('showFatturaGaranziaModal', false)">Annulla</button>
+          <button type="button" class="btn btn-warning" wire:click="generaFatturaGaranzia" wire:loading.attr="disabled">
+            <span wire:loading wire:target="generaFatturaGaranzia" class="spinner-border spinner-border-sm mr-1"></span>
+            <i class="fas fa-file-invoice-dollar mr-1"></i>Genera Fatture
           </button>
         </div>
       </div>

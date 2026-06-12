@@ -4,6 +4,7 @@ namespace App\Livewire\Commesse;
 
 use App\Actions\Commessa\AggiornaStatoAction;
 use App\Actions\Fatturazione\GeneraFatturaDoppiaAction;
+use App\Actions\Fatturazione\GeneraFatturaGaranziaAction;
 use App\Actions\Scadenze\CreaScadenzeAutomaticheAction;
 use App\Enums\StatoCarrozzeria;
 use App\Enums\StatoCommessa;
@@ -40,6 +41,10 @@ class DettaglioCommessa extends Component
     public bool $showConfermaAvanzaFase = false;
     public bool $showDoppiaFatturaModal  = false;
     public array $previewDoppiaFattura  = [];
+
+    // Garanzia
+    public bool $showFatturaGaranziaModal = false;
+    public array $previewFatturaGaranzia  = [];
 
     // Stato accettazione veicolo (SVG interattivo)
     public bool $showStatoAccettazioneModal = false;
@@ -267,11 +272,62 @@ class DettaglioCommessa extends Component
         }
     }
 
+    // ─── Garanzia: fattura ────────────────────────────────────────────────────
+
+    public function apriGaranziaFattura(): void
+    {
+        $this->authorize('create', Documento::class);
+
+        $this->commessa->load('righe.casaMadre');
+
+        $righeGaranzia = $this->commessa->righe->where('in_garanzia', true);
+        $righeCliente  = $this->commessa->righe->where('in_garanzia', false);
+
+        $perCasaMadre = $righeGaranzia->groupBy('casa_madre_id')->map(function ($righe) {
+            $cm = $righe->first()->casaMadre;
+            return [
+                'ragione_sociale' => $cm?->ragione_sociale ?? 'Garanzia interna',
+                'totale'          => $righe->sum(fn($r) => $r->totale),
+                'count_righe'     => $righe->count(),
+            ];
+        })->values()->toArray();
+
+        $this->previewFatturaGaranzia = [
+            'tot_cliente'    => $this->commessa->righe->sum(fn($r) => $r->totale_cliente),
+            'tot_case_madri' => $this->commessa->righe->sum(fn($r) => $r->totale_casa_madre),
+            'per_casa_madre' => $perCasaMadre,
+            'righe_cliente'  => $righeCliente->count(),
+        ];
+
+        $this->showFatturaGaranziaModal = true;
+    }
+
+    public function generaFatturaGaranzia(): void
+    {
+        $this->authorize('create', Documento::class);
+
+        try {
+            $documenti = app(GeneraFatturaGaranziaAction::class)->execute($this->commessa);
+            $this->commessa->refresh();
+            $this->showFatturaGaranziaModal = false;
+
+            $numeri = collect($documenti)->pluck('numero')->implode(' + ');
+            session()->flash('success', "Fatture garanzia generate: {$numeri}.");
+        } catch (\InvalidArgumentException $e) {
+            session()->flash('error', $e->getMessage());
+        }
+    }
+
     public function render()
     {
+        $garanzieAttive = $this->commessa->veicolo
+            ? $this->commessa->veicolo->garanzie()->attive()->with('casaMadre')->get()
+            : collect();
+
         return view('livewire.commesse.dettaglio-commessa', [
-            'marginalita'       => $this->marginalita,
-            'fasiCarrozzeria'   => StatoCarrozzeria::inOrdine(),
+            'marginalita'     => $this->marginalita,
+            'fasiCarrozzeria' => StatoCarrozzeria::inOrdine(),
+            'garanzieAttive'  => $garanzieAttive,
         ]);
     }
 }

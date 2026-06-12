@@ -60,6 +60,11 @@ class Veicolo extends Model
         return $this->hasMany(Pneumatico::class);
     }
 
+    public function garanzie()
+    {
+        return $this->hasMany(Garanzia::class)->orderByDesc('data_inizio');
+    }
+
     /** Descrizione completa del veicolo */
     public function getDescrizioneAttribute(): string
     {

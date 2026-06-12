@@ -310,6 +310,23 @@
           </li>
           @endhasanyrole
 
+          @hasanyrole('admin|cassa')
+          <li class="nav-item has-treeview {{ request()->routeIs('garanzie.*') ? 'menu-open' : '' }}">
+            <a href="#" class="nav-link {{ request()->routeIs('garanzie.*') ? 'active' : '' }}">
+              <i class="nav-icon fas fa-shield-alt"></i>
+              <p>Garanzie <i class="fas fa-angle-left right"></i></p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{{ route('garanzie.report') }}" class="nav-link {{ request()->routeIs('garanzie.report') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Report garanzie</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+          @endhasanyrole
+
           @role('admin')
           <li class="nav-item has-treeview {{ request()->routeIs('crm.*') ? 'menu-open' : '' }}">
             <a href="#" class="nav-link {{ request()->routeIs('crm.*') ? 'active' : '' }}">
@@ -468,6 +485,12 @@
                 <a href="{{ route('impostazioni.pacchetti') }}" class="nav-link {{ request()->routeIs('impostazioni.pacchetti') ? 'active' : '' }}">
                   <i class="far fa-circle nav-icon"></i>
                   <p>Pacchetti Servizio</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{{ route('impostazioni.case-madri') }}" class="nav-link {{ request()->routeIs('impostazioni.case-madri') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Case Madri</p>
                 </a>
               </li>
             </ul>
