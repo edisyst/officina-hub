@@ -1,6 +1,8 @@
+The fix is simple — the compressed file is missing the `#` on the first line. Here is the corrected file:
+
 # Officina Hub — CLAUDE.md
 
-Gestionale web on-premise per officine meccaniche (auto, moto, carrozzerie).
+Gestionale web on-premise officine meccaniche (auto, moto, carrozzerie).
 Stack: Laravel 11 + Livewire 3 + Alpine.js + AdminLTE 3 + MariaDB 11 + FullCalendar v6.
 
 ## Comandi Principali
@@ -82,18 +84,18 @@ GET  /impostazioni/case-madri    → impostazioni.case-madri (admin) — CRUD ca
 
 ## Note architetturali Step 17
 
-- `CasaMadre`: azienda costruttrice/importatrice verso cui si fatturano gli interventi in garanzia; SoftDeletes; campi SDI (`codice_destinatario_sdi`, `pec`) per FatturaPA.
-- `Garanzia`: per-veicolo con `data_fine`, `km_fine`, `numero_pratica`, `attiva`; scope `attive()` filtra per `attiva=true` e `data_fine >= oggi`; `isInScadenza()` → `data_fine <= now()->addDays(30)`.
+- `CasaMadre`: azienda costruttrice/importatrice fatturazione interventi garanzia; SoftDeletes; campi SDI (`codice_destinatario_sdi`, `pec`) per FatturaPA.
+- `Garanzia`: per-veicolo con `data_fine`, `km_fine`, `numero_pratica`, `attiva`; scope `attive()` filtra `attiva=true` e `data_fine >= oggi`; `isInScadenza()` → `data_fine <= now()->addDays(30)`.
 - `TipoGaranzia` enum: `GaranziaCostruttore|GaranziaUsato|GaranziaRiparazione|GaranziaRicambio|Convenzione`; `richiedeCasaMadre()` true per Costruttore e Convenzione.
 - `CommessaRiga`: aggiunto `in_garanzia` (bool), `garanzia_id` FK nullable, `casa_madre_id` FK nullable. Accessor `totale_cliente` = 0 se in_garanzia; `totale_casa_madre` = totale se in_garanzia.
-- `Commessa`: aggiunto `ha_righe_garanzia` (bool, aggiornato da observer); accessor `totale_cliente` e `totale_casa_madre` sommano le righe.
+- `Commessa`: aggiunto `ha_righe_garanzia` (bool, aggiornato da observer); accessor `totale_cliente` e `totale_casa_madre` sommano righe.
 - `CommessaRigaObserver`: aggiorna `ha_righe_garanzia` su commessa ad ogni `saved`/`deleted` riga.
 - `GeneraFatturaGaranziaAction::execute()`: in transaction crea 1 fattura cliente (righe non-garanzia) + 1 fattura per casa madre per ogni `casa_madre_id` unico nelle righe in garanzia; usa `NumerazioneService::prossimo()` per ogni documento; `documento_correlato_id` collega casa-madre a cliente.
-- `TipoEmissione::CasaMadre` ('casa_madre') aggiunto all'enum; il template FatturaPA usa i dati `CasaMadre` nel blocco `CessionarioCommittente` se `$documento->casaMadre` presente.
+- `TipoEmissione::CasaMadre` ('casa_madre') aggiunto all'enum; template FatturaPA usa dati `CasaMadre` nel blocco `CessionarioCommittente` se `$documento->casaMadre` presente.
 - `Documento`: aggiunto `casa_madre_id` FK nullable, `tipo_emissione_garanzia` string nullable.
 - Page views usano `<x-app-layout>` (non `@extends`) perché `layouts/app.blade.php` usa `{{ $slot }}`.
 - Seeder `CaseMadriSeeder`: 5 placeholder (FCA, BMW, Mercedes, VW, Renault).
-- Alert scadenza garanzia 30 gg: visibile nel tab Garanzie di `DettaglioVeicolo` e nell'header di `DettaglioCommessa`.
+- Alert scadenza garanzia 30gg: visibile tab Garanzie di `DettaglioVeicolo` e header `DettaglioCommessa`.
 - Test: `GaranzieStep17Test` — 14 test: garanzia attiva/in_scadenza/scaduta, totali riga, observer ha_righe_garanzia, GeneraFatturaGaranziaAction 2 docs, no-garanzia exception, route access, multi-casa-madre 3 docs, XML FatturaPA casa madre.
 
 ## Route Step 16
@@ -107,13 +109,13 @@ GET  /crm/campagne           → crm.campagne     (admin) — campagne email
 
 - **GDPR art. 6**: `consenso_marketing = false` è vincolo legale — `InviaCampagnaEmail` lancia `\RuntimeException` se tenta invio a cliente senza consenso. Non bypassabile da admin.
 - `SegmentazioneService::aggiornaIncrementale()`: aggiornamento CRM su singolo cliente — chiamato da `CommessaObserver` al passaggio a stato chiuso. Nessun ricalcolo ad ogni request.
-- `AggiornaPunteggiCrm` job: ricalcola `segmento_crm`, `valore_lifetime`, `numero_visite`, `ultima_visita_at` per tutti i clienti ogni notte alle 03:30.
+- `AggiornaPunteggiCrm` job: ricalcola `segmento_crm`, `valore_lifetime`, `numero_visite`, `ultima_visita_at` per tutti clienti ogni notte alle 03:30.
 - `InviaAuguriCompleanno` job: idempotente via `notifiche_log.sottotipo = 'compleanno'` + check data odierna. Solo clienti con `consenso_marketing = true` + `email` + `data_nascita` oggi (giorno+mese).
 - `InviaCampagnaEmail` job: idempotente via `campagna_invii.stato`; non reinvia se già `inviata`. Delay Laravel via `->delay()` al momento pianificato.
 - `CrmNota`: tabella `crm_note` con SoftDeletes; tipi: nota|chiamata|email|appuntamento|altro.
 - `campagne_email` + `campagna_invii`: traccia lifecycle completo invii per cliente; `totale_destinatari`, `totale_inviati`, `totale_errori` aggiornati al completamento job.
-- `notifiche_log` esteso con colonne `sottotipo` (varchar) e `campagna_email_id` (FK nullable) — migration 160006.
-- Badge menu CRM: count clienti `a_rischio`, cache 60 min (non per-utente ma globale), aggiornato in `MenuBadgesController`.
+- `notifiche_log` esteso con `sottotipo` (varchar) e `campagna_email_id` (FK nullable) — migration 160006.
+- Badge menu CRM: count clienti `a_rischio`, cache 60 min globale, aggiornato in `MenuBadgesController`.
 - `EmailTemplateService::compilaManuale()`: aggiunto per campagne (oggetto+corpo diretti, senza settings key).
 - Test: `CrmStep16Test` — unit segmentazione (nuovo/perso/a_rischio/attivo), campagna solo consensati, job compleanno, filtro segmento, nota CRM, route access.
 
@@ -132,10 +134,10 @@ GET  /acquisti/fatture                   → acquisti.fatture             (admin
 
 - `OrdineFornitore`: numerazione `ORD-YYYY-NNNN` gestita da `NumerazioneService::prossimoOrdineFornitore()` — metodo aggiunto al service (query su tabella dedicata, non `documenti`).
 - `RicezioneMerceAction`: in transaction crea DDT fornitore, aggiorna `quantita_ricevuta` su righe ordine, chiama `CaricoManualeAction` per ogni articolo, aggiorna stato ordine.
-- `PagamentoFornitoreObserver::created()`: crea automaticamente `prima_nota` di tipo `uscita`; usa `MetodoPagamentoFornitore::aMetodoPrimaNota()` per il mapping.
+- `PagamentoFornitoreObserver::created()`: crea automaticamente `prima_nota` tipo `uscita`; usa `MetodoPagamentoFornitore::aMetodoPrimaNota()` per mapping.
 - `FatturaAcquistoObserver::updated()`: al passaggio a stato `registrata` crea record in `registro_iva` con `tipo_registro = acquisti`; idempotente (controlla se già esiste).
-- `FatturaPAParser::parsaFatturaAcquisto()`: usa `SimpleXMLElement` nativo; gestisce FPR12 e FPA12 (strip namespace prefix via regex). Auto-match fornitore per P.IVA, auto-match articoli per codice (non standard in FPA, raramente valorizzato).
-- `MetodoPagamentoFornitore`: enum separato da `MetodoPagamento` perché include `Riba` non presente lato clienti; `aMetodoPrimaNota()` mappa a `MetodoPrimaNota` (Riba → Altro).
+- `FatturaPAParser::parsaFatturaAcquisto()`: usa `SimpleXMLElement` nativo; gestisce FPR12 e FPA12 (strip namespace prefix via regex). Auto-match fornitore per P.IVA, auto-match articoli per codice.
+- `MetodoPagamentoFornitore`: enum separato da `MetodoPagamento` perché include `Riba` assente lato clienti; `aMetodoPrimaNota()` mappa a `MetodoPrimaNota` (Riba → Altro).
 - `fattura_acquisto_id` aggiunto a `registro_iva` come FK nullable — coesiste con `documento_id` (vendite).
 - `pagamento_fornitore_id` aggiunto a `prima_nota` come FK nullable — coesiste con `pagamento_id` (clienti).
 - Scadenziario: tab "Clienti" (esistente) + tab "Fornitori" (fatture acquisto `registrata` con scadenza).
@@ -154,18 +156,18 @@ GET  /contabilita/export-sdi-batch       → contabilita.export-sdi-batch  (admi
 
 ## Note architetturali Step 14
 
-- `PrimaNota`: tabella `prima_nota` con SoftDeletes; `automatico=true` per i record generati da `PagamentoObserver` — non modificabili dall'interfaccia.
-- `PagamentoObserver::created()`: registrato in `AppServiceProvider`; crea automaticamente un record `prima_nota` di tipo `entrata` ad ogni pagamento fattura.
-- `ContoPrimaNota::daMetodo()`: helper che mappa il metodo di pagamento al conto (contanti→cassa, carta→pos, altri→banca).
+- `PrimaNota`: tabella `prima_nota` con SoftDeletes; `automatico=true` per record generati da `PagamentoObserver` — non modificabili dall'interfaccia.
+- `PagamentoObserver::created()`: registrato in `AppServiceProvider`; crea automaticamente record `prima_nota` tipo `entrata` ad ogni pagamento fattura.
+- `ContoPrimaNota::daMetodo()`: helper mappa metodo pagamento a conto (contanti→cassa, carta→pos, altri→banca).
 - Enums aggiunti: `TipoPrimaNota`, `MetodoPrimaNota`, `ContoPrimaNota`, `FormatoExportContabile`.
-- `CsvGenericoFormatter`: produce CSV UTF-8+BOM con separatore `;` — sempre disponibile, compatibile Excel italiano.
-- `TeamSystemFormatter`: tracciato a larghezza fissa per TeamSystem Studio; codici conto configurabili in settings.
-- `ZucchettiFormatter`, `DatagammaFormatter`: stub — lanciano `\RuntimeException`. **TODO**: implementare dalle specifiche ufficiali dei rispettivi vendor.
+- `CsvGenericoFormatter`: CSV UTF-8+BOM separatore `;` — sempre disponibile, compatibile Excel italiano.
+- `TeamSystemFormatter`: tracciato larghezza fissa per TeamSystem Studio; codici conto configurabili in settings.
+- `ZucchettiFormatter`, `DatagammaFormatter`: stub — lanciano `\RuntimeException`. **TODO**: implementare da specifiche vendor.
 - `ConservazioneService`: stub — lancia eccezione se non abilitata. **TODO**: integrare con conservatore accreditato AgID prima di abilitare.
 - Settings aggiunti: `export_contabile_formato` (csv_generico), `export_contabile_codice_conto_*` (placeholder — da verificare col commercialista), `conservazione_sostitutiva_abilitata` (0).
-- `ExportSdiBatch`: genera ZIP con XML FatturaPA dei documenti selezionati + `indice.csv`; usa `FatturaPAService::genera()` già esistente.
-- `RiepilogoCommercialista`: calcola i totali del periodo + chiama il formatter configurato; PDF via dompdf con timbro "NON HA VALORE FISCALE".
-- Il formato export per il riepilogo commercialista si legge da `settings.export_contabile_formato` (cambiabile in Impostazioni senza deploy).
+- `ExportSdiBatch`: genera ZIP con XML FatturaPA dei documenti selezionati + `indice.csv`; usa `FatturaPAService::genera()` esistente.
+- `RiepilogoCommercialista`: calcola totali periodo + chiama formatter configurato; PDF via dompdf con timbro "NON HA VALORE FISCALE".
+- Formato export riepilogo si legge da `settings.export_contabile_formato` (cambiabile in Impostazioni senza deploy).
 - Test: `ContabilitaStep14Test` — observer prima nota, movimenti manuali, CSV generico, TeamSystem, stub exceptions, route access.
 
 ## Struttura chiave
@@ -269,14 +271,14 @@ GET  /analytics/pacchetti               → analytics.pacchetti    (admin) — r
 
 ## Note architetturali Step 11
 
-- `TariffaManodopera`: listino tariffe manodopera; campo `minuti_standard` → `ore_standard` accessor.
+- `TariffaManodopera`: listino tariffe; campo `minuti_standard` → accessor `ore_standard`.
 - `PacchettoServizio::isCompatibile(Commessa)`: filtra per tipo_commessa, tipo_veicolo, alimentazione veicolo.
-- `PacchettoServizio::calcolaTotale()`: somma le righe (escluse note) con IVA.
+- `PacchettoServizio::calcolaTotale()`: somma righe (escluse note) con IVA.
 - `ApplicaPacchettoAction::execute()`: in transaction crea righe commessa dal pacchetto, imposta `pacchetto_servizio_id` su ogni riga, incrementa `utilizzi`.
-- `tariffa_manodopera_id` e `pacchetto_servizio_id` aggiunti a `commessa_righe` come FK nullable — traccia l'origine delle righe.
+- `tariffa_manodopera_id` e `pacchetto_servizio_id` aggiunti a `commessa_righe` come FK nullable — traccia origine righe.
 - Typeahead tariffe in `GestioneRighe`: selezione pre-popola descrizione, quantita (minuti/60), prezzo_unitario.
-- Modal "Applica pacchetto" a 2 passi: passo 1 ricerca con filtro compatibilità, passo 2 preview righe modificabili prima della conferma.
-- Seeder: 31 tariffe comuni in `TariffeManodoperaSeeder`, 3 pacchetti di esempio in `PacchettiServizioSeeder`.
+- Modal "Applica pacchetto" 2 passi: passo 1 ricerca con filtro compatibilità, passo 2 preview righe modificabili prima conferma.
+- Seeder: 31 tariffe comuni in `TariffeManodoperaSeeder`, 3 pacchetti in `PacchettiServizioSeeder`.
 - Import CSV tariffe: delimitatore `;`, colonne `codice;descrizione;categoria;minuti_standard;prezzo_listino;iva_percentuale;tipo_veicolo`. Usa `updateOrCreate` per idempotenza.
 - Export CSV: BOM UTF-8 (`\xEF\xBB\xBF`) per compatibilità Excel italiano.
 - Analytics pacchetti: top 10 per utilizzi + tariffe fuori listino (scostamento > 15% da prezzo listino).
@@ -298,24 +300,24 @@ GET  /impostazioni/lookup-targa-test         → impostazioni.lookup-test    (ad
 ## Note architetturali Step 13
 
 ### Veicoli di cortesia (Parte A)
-- `VeicoloCortesia`: flotta auto/moto/furgone; `isDisponibile(dal, al)` verifica sovrapposizioni sui prestiti attivi.
-- `PrestitoCortesia`: registra tutto il ciclo consegna→rientro; immutabile nel tracciamento (mai eliminare, solo aggiornare stato).
+- `VeicoloCortesia`: flotta auto/moto/furgone; `isDisponibile(dal, al)` verifica sovrapposizioni prestiti attivi.
+- `PrestitoCortesia`: ciclo completo consegna→rientro; immutabile nel tracciamento (mai eliminare, solo aggiornare stato).
 - `km_percorsi` e `delta_carburante` sono accessor calcolati — non colonne DB.
-- Flusso consegna (4 step tablet): selezione periodo → scelta veicolo → firma → conferma. Il canvas firma usa canvas nativo (non signature_pad) per semplicità.
+- Flusso consegna (4 step tablet): selezione periodo → scelta veicolo → firma → conferma. Canvas firma usa canvas nativo (non signature_pad).
 - Flusso rientro: validazione `km_rientro >= km_consegna` server-side e client-side; avviso carburante se delta < -10%.
-- PDF contratto comodato in `resources/views/pdf/contratto-cortesia.blade.php`: **le clausole legali sono testo fisso nel template Blade** (art. 1803 c.c. e ss.) — modificarle richiede accesso al codice, non è configurabile da settings.
-- `PdfService::contrattoCortesia()` scarica il PDF; route `cortesia.contratto`.
-- Badge menu "Cortesia" = count prestiti in ritardo (`inRitardo` scope: stato `in_corso` + `data_rientro_prevista < oggi`).
-- Endpoint FullCalendar `/api/cortesia/disponibilita` restituisce `{risorse: [...], eventi: [...]}` — formato diverso da `/api/appuntamenti` (che restituisce solo l'array eventi).
-- `patente_numero` e `patente_scadenza` aggiunti a `clienti` — esclusi dall'audit log e dai CSV export (dati sensibili).
+- PDF contratto comodato in `resources/views/pdf/contratto-cortesia.blade.php`: **clausole legali sono testo fisso nel template Blade** (art. 1803 c.c. e ss.) — modificarle richiede accesso al codice, non configurabile da settings.
+- `PdfService::contrattoCortesia()` scarica PDF; route `cortesia.contratto`.
+- Badge menu "Cortesia" = count prestiti in ritardo (scope `inRitardo`: stato `in_corso` + `data_rientro_prevista < oggi`).
+- Endpoint FullCalendar `/api/cortesia/disponibilita` restituisce `{risorse: [...], eventi: [...]}` — formato diverso da `/api/appuntamenti` (solo array eventi).
+- `patente_numero` e `patente_scadenza` aggiunti a `clienti` — esclusi da audit log e CSV export (dati sensibili).
 - Widget "Veicolo di cortesia" in `DettaglioCommessa`: query diretta `@php` nel Blade (accettabile, N+1 solo se molte commesse aperte).
-- Pulsante "Cortesia" nell'header di `DettaglioCommessa` → `/cortesia/consegna/commessa/{id}`.
+- Pulsante "Cortesia" header `DettaglioCommessa` → `/cortesia/consegna/commessa/{id}`.
 
 ### Lookup Targa (Parte B)
 - `LookupTargaService`: singleton-like; legge settings a runtime; restituisce `null` senza errori se disabilitato.
 - Provider: `MockProvider` (deterministico, no API key), `InfoTargaProvider` (Bearer token), `OpenApiProvider` (x-api-key header).
 - Cache 30 giorni per targa: `Cache::remember("targa_{$targa}", ...)`. Invalidazione manuale con `Cache::forget("targa_XX123YY")`.
-- **Non loggare mai la API key** — i provider loggano solo targa + status code HTTP in caso di errore.
+- **Non loggare mai la API key** — provider loggano solo targa + status code HTTP in caso di errore.
 - Settings aggiunti: `lookup_targa_abilitato` (0), `lookup_targa_provider` (mock), `lookup_targa_api_key`, `lookup_targa_timeout_ms` (3000), `lookup_targa_auto_search` (0).
 - Pulsante "Cerca dati" nel form veicolo: visibile SOLO se `lookup_targa_abilitato = true`; opzionalmente auto al blur.
 - Test connessione: `GET /impostazioni/lookup-targa-test` → risposta JSON raw in `<pre>` (solo admin).
@@ -336,19 +338,19 @@ GET  /deposito/qr/{codice}                → deposito.qr                 (admin
 
 - `Pneumatico`: anagrafica set gomme per veicolo; `codiceEtichetta()` → formato `{prefisso}-{anno}-{id:05d}`.
 - `DepositoPneumatico`: movimenti immutabili (come `MovimentoMagazzino`); traccia azione, ubicazione fisica, usura%.
-- `StagionePneumatico::opposta()`: helper per il cambio stagionale massivo (se monto estivi → cerco invernali in deposito).
-- `EtichettaDepositoService::genera()`: PDF A6 o adesivo (100×50mm) con QR code che encode l'URL `/deposito/qr/{codice}`.
+- `StagionePneumatico::opposta()`: helper per cambio stagionale massivo (se monto estivi → cerco invernali in deposito).
+- `EtichettaDepositoService::genera()`: PDF A6 o adesivo (100×50mm) con QR code che encode URL `/deposito/qr/{codice}`.
 - `EtichettaDepositoService::generaMultiple()`: PDF A4 multi-etichetta; 4 etichette per pagina.
-- QR scan tablet: il QR dell'etichetta deposito contiene l'URL diretto — funziona con lo stesso scanner Alpine.js già esistente in `BoardMeccanico`.
+- QR scan tablet: QR etichetta deposito contiene URL diretto — funziona con stesso scanner Alpine.js in `BoardMeccanico`.
 - `InviaNotificaCambioStagionale` job: idempotente via `NotificaLog.pneumatico_id` (colonna aggiunta in migration 120004).
-- `CambioStagionaleMassivo::creaAppuntamentiInBlocco()`: distribuisce gli appuntamenti nei 5 giorni lavorativi della settimana selezionata bilanciando il carico (`COUNT` appuntamenti per giorno).
+- `CambioStagionaleMassivo::creaAppuntamentiInBlocco()`: distribuisce appuntamenti nei 5 giorni lavorativi della settimana selezionata bilanciando carico (`COUNT` appuntamenti per giorno).
 - Badge menu "Deposito Gomme": count set `in_deposito` da più di 180 giorni — aggiunto in `MenuBadgesController` (`deposito_da_ritirare`).
 - Mappa scaffali `ReportDeposito`: SVG inline generato PHP con regex `([A-Z])(\d+)` sulle ubicazioni; celle rosse = occupato, verdi = libero.
-- Tab "Pneumatici" nel `DettaglioVeicolo`: badge blu con count set in deposito; carica `GestionePneumatici` Livewire.
-- Pulsante "Pneumatici" nel header di `DettaglioCommessa` → `/deposito/commessa/{id}`.
+- Tab "Pneumatici" in `DettaglioVeicolo`: badge blu con count set in deposito; carica `GestionePneumatici` Livewire.
+- Pulsante "Pneumatici" header `DettaglioCommessa` → `/deposito/commessa/{id}`.
 - Settings aggiunti: `deposito_pneumatici_abilitato`, `etichetta_deposito_prefisso` (DEP), `etichetta_deposito_formato` (A6), `notifica_cambio_stagionale_mese_estivo` (4), `notifica_cambio_stagionale_mese_invernale` (10), `template_email_cambio_stagionale`.
-- PFU (D.Lgs. 152/2006): nella tab smaltimenti del report è visibile l'elenco annuale con promemoria documentazione. Il sistema NON genera automaticamente documenti PFU — è responsabilità dell'officina.
-- `NotificaGenerica` Mailable: mailable senza modello specifico, usa lo stesso template `emails.notifica-commessa`.
+- PFU (D.Lgs. 152/2006): tab smaltimenti del report mostra elenco annuale con promemoria documentazione. Sistema NON genera automaticamente documenti PFU — responsabilità dell'officina.
+- `NotificaGenerica` Mailable: senza modello specifico, usa stesso template `emails.notifica-commessa`.
 
 ## Route Step 8
 
@@ -372,25 +374,25 @@ GET  /allegati/perizie/{filename}           → allegati.perizia                
 
 ## Note architetturali Step 8
 
-- `KpiService` (in `Services/Analytics/`): calcoli KPI con `Cache::remember` TTL 10 min. Usa `whereDate` (non `whereBetween`) per compatibilità SQLite in test (SQLite salva le date come `Y-m-d H:i:s`).
+- `KpiService` (in `Services/Analytics/`): calcoli KPI con `Cache::remember` TTL 10 min. Usa `whereDate` (non `whereBetween`) per compatibilità SQLite in test (SQLite salva date come `Y-m-d H:i:s`).
 - `MeccaniciService`: produttività per-meccanico (ore lavorate vs fatturate, efficienza, margine).
-- `Analytics\MarginalitaService`: unificata con `Services\MarginalitaService` Step 2 — quella originale ora estende la nuova come alias backward-compat. Include `calcolaPerCategoria`, `calcolaPerArticoli`, `calcolaTrendMensile`.
+- `Analytics\MarginalitaService`: unificata con `Services\MarginalitaService` Step 2 — originale ora estende nuova come alias backward-compat. Include `calcolaPerCategoria`, `calcolaPerArticoli`, `calcolaTrendMensile`.
 - `CsvExportService`: export CSV con BOM UTF-8 (`\xEF\xBB\xBF`) per compatibilità Excel italiano.
-- Funzioni SQL `YEAR()` / `MONTH()` non supportate da SQLite — il metodo `datePartExpressions()` detecta il driver e usa `strftime` per SQLite, `YEAR/MONTH` per MySQL/MariaDB.
+- Funzioni SQL `YEAR()` / `MONTH()` non supportate da SQLite — `datePartExpressions()` detecta driver e usa `strftime` per SQLite, `YEAR/MONTH` per MySQL/MariaDB.
 - Badge menu aggiornati ogni 2 minuti via `fetch('/api/menu-badges')` in vanilla JS inline nel layout. Cache TTL 120s per-utente.
-- Chart.js 2.9.4 importato in `app.js` ed esposto come `window.Chart`. Grafici inizializzati in `x-init` di Alpine; aggiornati via eventi Livewire dispatch (`@event-name.window`).
-- Export PDF meccanici: il grafico Chart.js viene catturato come base64 PNG via `chart.toBase64Image()` in JS, passato a Livewire via `@this.set()`, poi inviato a dompdf.
+- Chart.js 2.9.4 importato in `app.js` ed esposto come `window.Chart`. Grafici inizializzati in `x-init` Alpine; aggiornati via eventi Livewire dispatch (`@event-name.window`).
+- Export PDF meccanici: grafico Chart.js catturato come base64 PNG via `chart.toBase64Image()` in JS, passato a Livewire via `@this.set()`, poi inviato a dompdf.
 - `ReportMagazzino` esteso con tab Rotazione (indice = scaricato_anno / giacenza_media; classi: alta/media/bassa/ferma) e Valore per categoria (grafico Chart.js).
-- Test analytics in `tests/Feature/Analytics/`: aggiungere `Cache::flush()` in `setUp()` per evitare collisioni di cache tra test dello stesso periodo.
+- Test analytics in `tests/Feature/Analytics/`: aggiungere `Cache::flush()` in `setUp()` per evitare collisioni cache tra test stesso periodo.
 
 ## Note architetturali Step 7
 
-- Modulo Carrozzeria: visibile solo per commesse di tipo `carrozzeria`.
+- Modulo Carrozzeria: visibile solo per commesse tipo `carrozzeria`.
 - `CompagniaAssicurativa` + `Sinistro` + `Perizia`: gestione sinistri assicurativi.
 - `DannoVeicolo`: catalogo danni per zona (enum `ZonaDanno`); SVG interattivo con Alpine.js nella vista.
-- `FotoDanno`: foto caricate in `storage/app/allegati/foto-danni/`, servite tramite route autenticata.
-- `StatoCarrozzeria`: workflow parallelo allo stato commessa; la commessa passa a `completata` solo con `stato_carrozzeria = consegna`.
-- `GeneraFatturaDoppiaAction`: crea due fatture (cliente + assicurazione) collegate via `documento_correlato_id`; la seconda fattura usa il progressivo dopo aver inserito la prima (ordine sequenziale).
+- `FotoDanno`: foto in `storage/app/allegati/foto-danni/`, servite tramite route autenticata.
+- `StatoCarrozzeria`: workflow parallelo a stato commessa; commessa passa a `completata` solo con `stato_carrozzeria = consegna`.
+- `GeneraFatturaDoppiaAction`: crea due fatture (cliente + assicurazione) collegate via `documento_correlato_id`; seconda fattura usa progressivo dopo aver inserito prima (ordine sequenziale).
 - Download ZIP foto usa `ZipArchive` nativo PHP in `CarrozzeriaController`.
 - `commesse.sinistro_id` è senza FK constraint (FK inversa: `sinistri.commessa_id`) per evitare riferimento circolare.
 - PDF scheda carrozzeria usa closure `$zonaClass` (non funzione named) per evitare redeclarazione in Blade compilato.
@@ -406,15 +408,15 @@ GET  /cliente/{token}             → cliente.portale            (pubblico, URL 
 
 ## Note architetturali Step 6
 
-- `MailConfigService::applica()` sovrascrive la config SMTP a runtime da `settings` DB; invocata in `AppServiceProvider::boot()` e prima di ogni invio manuale.
-- `setting(string $key)` è un helper globale (`app/helpers.php`, autoloadato via composer.json `files`) che legge da `Setting::get()` con cache Laravel.
-- `EmailTemplateService::compila()` splitta la prima riga `Oggetto:` dall'oggetto email e sostituisce `{{VARIABILE}}` nel corpo.
-- `AggiornaStatoAction` accoda l'email in coda (`Mail::to()->queue()`) solo se: notifiche abilitate, cliente ha email, nessuna notifica accodata negli ultimi 5 minuti per la stessa commessa.
-- `NotificaLog` registra ogni tentativo di notifica (email); campo `email_smtp_password` NON in `$fillable`, mai esposto in log o JS.
-- `InviaRichiamiScadenza` Job è idempotente: prima di inviare verifica `NotificaLog` delle ultime 24h per la stessa scadenza. Usa filtro PHP (non SQL vendor-specific) per la finestra `notifica_giorni_prima`.
-- `CommessaObserver::updated()` su stato `consegnata` chiama `CreaScadenzeAutomaticheAction::suggerisci()` e dispatcha l'evento Livewire `scadenze-suggerite` che il `DettaglioCommessa` gestisce con `#[On]`.
+- `MailConfigService::applica()` sovrascrive config SMTP a runtime da `settings` DB; invocata in `AppServiceProvider::boot()` e prima di ogni invio manuale.
+- `setting(string $key)` è helper globale (`app/helpers.php`, autoloadato via composer.json `files`) che legge da `Setting::get()` con cache Laravel.
+- `EmailTemplateService::compila()` splitta prima riga `Oggetto:` dall'oggetto email e sostituisce `{{VARIABILE}}` nel corpo.
+- `AggiornaStatoAction` accoda email in coda (`Mail::to()->queue()`) solo se: notifiche abilitate, cliente ha email, nessuna notifica accodata negli ultimi 5 minuti per stessa commessa.
+- `NotificaLog` registra ogni tentativo notifica; campo `email_smtp_password` NON in `$fillable`, mai esposto in log o JS.
+- `InviaRichiamiScadenza` Job è idempotente: verifica `NotificaLog` ultime 24h per stessa scadenza prima di inviare. Usa filtro PHP (non SQL vendor-specific) per finestra `notifica_giorni_prima`.
+- `CommessaObserver::updated()` su stato `consegnata` chiama `CreaScadenzeAutomaticheAction::suggerisci()` e dispatcha evento Livewire `scadenze-suggerite` che `DettaglioCommessa` gestisce con `#[On]`.
 - Portale cliente `/cliente/{token}` usa `URL::signedRoute` con `encrypt($cliente->id)` come token; validato con `$request->hasValidSignature()`. Link non richiede login.
-- Scheduler: `routes/console.php` con `Schedule::job(new InviaRichiamiScadenza)->dailyAt('08:00')`. Docker: `entrypoint.sh` avvia `crond` e il queue worker in background, poi `php-fpm` in foreground.
+- Scheduler: `routes/console.php` con `Schedule::job(new InviaRichiamiScadenza)->dailyAt('08:00')`. Docker: `entrypoint.sh` avvia `crond` e queue worker in background, poi `php-fpm` in foreground.
 
 ## PWA — note sviluppo
 
@@ -438,7 +440,7 @@ GET  /cliente/{token}             → cliente.portale            (pubblico, URL 
 ## Credenziali default (seeder)
 
 - **Admin**: `admin@officinahub.local` / `password`
-- Ruoli disponibili: `admin`, `accettatore`, `meccanico`, `cassa`
+- Ruoli: `admin`, `accettatore`, `meccanico`, `cassa`
 
 ## Workflow stati commessa
 
@@ -447,12 +449,12 @@ bozza → accettata → in_lavorazione ⇄ sospesa
                    → completata → consegnata → fatturata
 ```
 
-Ogni transizione è loggata in `commessa_log`. Accettazione e consegna richiedono firma SVG.
+Ogni transizione loggata in `commessa_log`. Accettazione e consegna richiedono firma SVG.
 
 ## Asset statici
 
-AdminLTE 3 è copiato in `public/vendor/adminlte/` da `node_modules/admin-lte`.
-Per aggiornare gli asset AdminLTE:
+AdminLTE 3 copiato in `public/vendor/adminlte/` da `node_modules/admin-lte`.
+Per aggiornare asset AdminLTE:
 ```bash
 cp -r node_modules/admin-lte/dist public/vendor/adminlte/dist
 cp -r node_modules/admin-lte/plugins public/vendor/adminlte/plugins
@@ -460,36 +462,36 @@ cp -r node_modules/admin-lte/plugins public/vendor/adminlte/plugins
 
 ## Note architetturali Step 5
 
-- `TabletLayout` è un Blade component (`app/View/Components/TabletLayout.php`) che renderizza `layouts/tablet.blade.php`.
-- `<x-marcatempo-layout>` è un alias che delega a `<x-tablet-layout subtitle="Marcatempo">` via `layouts/marcatempo.blade.php`.
-- jsQR è caricato da CDN solo nel layout tablet — non va nel bundle Vite (evita peso per le view desktop).
+- `TabletLayout` è Blade component (`app/View/Components/TabletLayout.php`) che renderizza `layouts/tablet.blade.php`.
+- `<x-marcatempo-layout>` è alias che delega a `<x-tablet-layout subtitle="Marcatempo">` via `layouts/marcatempo.blade.php`.
+- jsQR caricato da CDN solo nel layout tablet — non va nel bundle Vite (evita peso per view desktop).
 - Scanner QR usa `getUserMedia` con `facingMode: 'environment'` (fotocamera posteriore tablet); richiede HTTPS o localhost.
 - Checklist: unica constraint `UNIQUE(checklist_template_id, commessa_id)` in `checklist_compilate` — una compilazione per coppia template+commessa.
 - Risposte progressive: ogni `wire:change` chiama `salvaRisposta()` — nessun batch submit finale; `completata_at` si imposta solo su "Finalizza".
 - Foto checklist: salvate in `storage/app/allegati/checklist/` (disco `local`), servite tramite route autenticata `/allegati/checklist/{filename}`.
-- Il badge checklist nel tab di `DettaglioCommessa` esegue query inline `@php` nel Blade — accettabile, ma se diventa N+1 estrarre nel component Livewire.
-- Il QR code SVG è generato on-the-fly da `simplesoftwareio/simple-qrcode` (backend); nessun file viene salvato su disco.
-- Icons PWA: PNG generati con GD in `public/images/icons/`; sostituire con file grafici professionali per produzione.
+- Badge checklist nel tab `DettaglioCommessa` esegue query inline `@php` nel Blade — accettabile, ma se diventa N+1 estrarre nel component Livewire.
+- QR code SVG generato on-the-fly da `simplesoftwareio/simple-qrcode` (backend); nessun file salvato su disco.
+- Icons PWA: PNG generati con GD in `public/images/icons/`; sostituire con grafici professionali per produzione.
 
 ## Note architetturali Step 4
 
-- `Documento` è immutabile una volta in stato `emessa` — per correggere si emette una nota di credito.
+- `Documento` immutabile una volta in stato `emessa` — per correggere si emette nota di credito.
 - `NumerazioneService::prossimo()` usa `lockForUpdate()` in transaction per garantire unicità sotto carico.
-- `FatturaPAService::genera()` renderizza il template Blade `fatturapa/fattura.blade.php` e ritorna stringa XML.
+- `FatturaPAService::genera()` renderizza template Blade `fatturapa/fattura.blade.php` e ritorna stringa XML.
 - `FatturaPAService::valida()` richiede `storage/app/fatturapa/xsd/Schema_VFPR12.xsd` (da scaricare da AdE).
-- `DocumentoObserver` popola la tabella `registro_iva` al passaggio di stato a `emessa`.
-- Lo ZIP SdI è generato in `storage/app/fatturapa/temp/` e può essere eliminato dopo il download.
-- Le ricevute SdI caricate manualmente sono salvate in `storage/app/fatturapa/ricevute/`.
-- Il PDF di cortesia porta la dicitura "Documento privo di valore fiscale" obbligatoria.
+- `DocumentoObserver` popola tabella `registro_iva` al passaggio di stato a `emessa`.
+- ZIP SdI generato in `storage/app/fatturapa/temp/` — eliminabile dopo download.
+- Ricevute SdI caricate manualmente salvate in `storage/app/fatturapa/ricevute/`.
+- PDF cortesia porta dicitura "Documento privo di valore fiscale" obbligatoria.
 
 ## Note architetturali Step 3
 
-- `MovimentoMagazzino` è immutabile: `$timestamps = false`, nessun update/delete dopo la creazione.
-- `giacenza_attuale` su `Articolo` è denormalizzata: aggiornata da ogni Action con DB transaction + `lockForUpdate()`.
+- `MovimentoMagazzino` immutabile: `$timestamps = false`, nessun update/delete dopo creazione.
+- `giacenza_attuale` su `Articolo` denormalizzata: aggiornata da ogni Action con DB transaction + `lockForUpdate()`.
 - `CommessaObserver::updated()` invoca `ScaricoCommessaAction` solo al passaggio a `StatoCommessa::Completata`.
-- Lo scarico in negativo non blocca il completamento: crea il movimento con nota "SCARICO IN NEGATIVO" e logga un warning.
-- Il typeahead articoli in `GestioneRighe` usa `wire:model.live.debounce.300ms` e popola automaticamente prezzo e IVA.
-- Il badge rosso sul menu Magazzino esegue una query diretta nel layout (non caching): accettabile per poche migliaia di articoli.
+- Scarico in negativo non blocca completamento: crea movimento con nota "SCARICO IN NEGATIVO" e logga warning.
+- Typeahead articoli in `GestioneRighe` usa `wire:model.live.debounce.300ms` e popola automaticamente prezzo e IVA.
+- Badge rosso menu Magazzino esegue query diretta nel layout (no caching): accettabile per poche migliaia di articoli.
 - `ReportMagazzino::esportaCsv()` usa `response()->streamDownload()` — nessun pacchetto aggiuntivo.
 
 ## Route Step 10
@@ -511,23 +513,23 @@ GET  /impostazioni/dvi-categorie             → impostazioni.dvi-categorie (adm
 
 ### DVI (Digital Vehicle Inspection)
 
-- `DviIspezione` → `DviVoce` → `DviMedia`: struttura dati separata dalla checklist (interna) — la DVI è esterna (meccanici → cliente).
-- Foto salvate in `storage/app/dvi/foto/{anno}/{mese}/`, thumbnail con Intervention Image (GD).
+- `DviIspezione` → `DviVoce` → `DviMedia`: struttura dati separata da checklist (interna) — DVI è esterna (meccanici → cliente).
+- Foto in `storage/app/dvi/foto/{anno}/{mese}/`, thumbnail con Intervention Image (GD).
 - Video: upload chunked in vanilla JS (Alpine + XMLHttpRequest), endpoint `POST /api/dvi/upload-chunk`.
-  Chunk salvati in `storage/app/tmp/dvi/{upload_id}/chunk_N`, riassemblati all'ultimo chunk.
+  Chunk in `storage/app/tmp/dvi/{upload_id}/chunk_N`, riassemblati all'ultimo chunk.
   File finale in `storage/app/dvi/video/{anno}/{mese}/`.
 - Thumbnail video: estratta con `ffmpeg -ss 00:00:01 -vframes 1`; se ffmpeg non disponibile, placeholder SVG con icona play.
-- Dockerfile aggiornato con `apk add --no-cache ffmpeg` per il container Docker.
-- Il portale cliente `/dvi/{token}` è **HTML puro** senza AdminLTE/Livewire/Alpine: massima compatibilità su connessioni lente.
+- Dockerfile aggiornato con `apk add --no-cache ffmpeg`.
+- Portale cliente `/dvi/{token}` è **HTML puro** senza AdminLTE/Livewire/Alpine: massima compatibilità su connessioni lente.
 - Token DVI: opaco (64 char random), scadenza in DB (`link_scade_at`). Non usa `URL::signedRoute`.
-- Dopo la risposta del cliente: `stato` aggiornato (approvata/parzialmente_approvata/rifiutata), `dvi_approvazione_importo` salvato su `commesse`.
-- "Converti in preventivo": crea righe `commessa_righe` dalle voci DVI approvate. Tipo riga: `Manodopera`.
-- Jobs: `InviaDviCliente` (email al cliente con link), `NotificaDviRisposta` (email officina al completamento).
+- Dopo risposta cliente: `stato` aggiornato (approvata/parzialmente_approvata/rifiutata), `dvi_approvazione_importo` salvato su `commesse`.
+- "Converti in preventivo": crea righe `commessa_righe` da voci DVI approvate. Tipo riga: `Manodopera`.
+- Jobs: `InviaDviCliente` (email cliente con link), `NotificaDviRisposta` (email officina al completamento).
 - Template email DVI: `template_email_dvi` in `settings` — variabili: `{{TARGA}}`, `{{NOME_CLIENTE}}`, `{{LINK_DVI}}`, `{{DATA_SCADENZA}}`, `{{NOME_OFFICINA}}`, `{{TELEFONO_OFFICINA}}`.
-- Widget dashboard (admin/accettatore): DVI in attesa di risposta + count risposte ricevute oggi.
-- Tab "DVI" nel dettaglio commessa con badge giallo se in attesa, grigio se già risposto.
+- Widget dashboard (admin/accettatore): DVI in attesa risposta + count risposte ricevute oggi.
+- Tab "DVI" dettaglio commessa con badge giallo se in attesa, grigio se già risposto.
 - `DviCategoria`: categorie configurabili via `/impostazioni/dvi-categorie`; 10 predefinite seeded.
-- `intervention/image` v4 richiede `ImageManager(new Driver())` — non usare la vecchia API `Image::make()`.
+- `intervention/image` v4 richiede `ImageManager(new Driver())` — non usare vecchia API `Image::make()`.
 
 ## Note architetturali Step 9
 
@@ -536,14 +538,14 @@ GET  /impostazioni/dvi-categorie             → impostazioni.dvi-categorie (adm
 - `SecurityHeaders` middleware registrato globalmente via `bootstrap/app.php` (`$middleware->append`).
   Aggiunge X-Frame-Options, X-Content-Type-Options, CSP, ecc. a tutte le risposte.
 - **CSP usa `'unsafe-inline'`** intenzionalmente: necessario per Livewire (wire:click inline) e Alpine.js
-  (x-data inline). Non è un bug — è documentato qui.
+  (x-data inline). Non è bug — documentato qui.
 - Rate limiting: `throttle:login` (5/min per IP) su POST `/login`; `throttle:api-internal`
-  (120/min per utente/IP) sugli endpoint `/api/*`. Definiti in `AppServiceProvider::boot()`.
+  (120/min per utente/IP) su endpoint `/api/*`. Definiti in `AppServiceProvider::boot()`.
 - Validazione upload: tutti i file usano sia `mimes:` (estensione) sia `mimetypes:` (MIME reale),
   più nome file randomizzato prima del salvataggio.
-- Sessione: lifetime 480 min (8 ore, turno di lavoro); `secure=true` di default (solo HTTPS).
+- Sessione: lifetime 480 min (8 ore, turno di lavoro); `secure=true` default (solo HTTPS).
   In sviluppo HTTP impostare `SESSION_SECURE_COOKIE=false` nel `.env` locale.
-- Policy `AllegatoPolicy` e `ScadenzaPolicy` aggiunte in `AppServiceProvider` (totale 13 policy).
+- `AllegatoPolicy` e `ScadenzaPolicy` aggiunte in `AppServiceProvider` (totale 13 policy).
 
 ### Backup (spatie/laravel-backup)
 
@@ -556,23 +558,22 @@ GET  /impostazioni/dvi-categorie             → impostazioni.dvi-categorie (adm
 ### Audit log (spatie/laravel-activitylog v4)
 
 - Trait `LogsActivity` aggiunto a `Commessa`, `Documento`, `MovimentoMagazzino`, `User`.
-- Ogni model logga solo i campi rilevanti (es. Commessa: `stato`, `data_consegna`, `km_ingresso`).
+- Ogni model logga solo campi rilevanti (es. Commessa: `stato`, `data_consegna`, `km_ingresso`).
 - Vista `/audit-log` (solo `admin`): Livewire component `Admin\AuditLog` con filtri e export CSV.
-- Il log non è eliminabile dall'interfaccia (solo l'admin DB può farlo).
+- Log non eliminabile dall'interfaccia (solo admin DB può farlo).
 
 ### Cache KPI
 
-- `KpiService::invalidaCache()` svuota le chiavi statiche (sparkline, grafico fatturato).
+- `KpiService::invalidaCache()` svuota chiavi statiche (sparkline, grafico fatturato).
 - Chiamato automaticamente da `CommessaObserver` e `DocumentoObserver` al cambio di stato.
-- Le cache per-periodo (fatturato range date) scadono per TTL (10 min): per invalidazione completa
-  servirebbero cache tag (`Cache::tags()`), che richiedono Redis/Memcached.
+- Cache per-periodo (fatturato range date) scadono per TTL (10 min): per invalidazione completa servirebbero cache tag (`Cache::tags()`), che richiedono Redis/Memcached.
 
 ### SDI diretto (disabilitato)
 
-- `config/sdi.php` contiene tutti i parametri del canale SdI.
+- `config/sdi.php` contiene parametri canale SdI.
 - `SdiService` e `InviaDocumentoSdi` job sono skeleton: `throw RuntimeException` se `SDI_ABILITATO=false`.
-- Il pulsante "Invia al SdI" nel dettaglio documento è visibile **solo** se `config('sdi.abilitato')=true`.
-- Procedura di attivazione completa in `docs/sdi-diretto.md`.
+- Pulsante "Invia al SdI" nel dettaglio documento visibile **solo** se `config('sdi.abilitato')=true`.
+- Procedura attivazione completa in `docs/sdi-diretto.md`.
 
 ### Relazioni N+1 da eager-load sempre
 
@@ -585,19 +586,18 @@ Appuntamento::with(['commessa', 'cliente', 'veicolo', 'ponte', 'user'])
 ### Laravel Debugbar (dev only)
 
 - Installato come dipendenza `--dev`. Non attivo in produzione (`APP_DEBUG=false`).
-- Usare per individuare query N+1 (`Queries` panel).
+- Usare per individuare query N+1 (panel `Queries`).
 
 ---
 
 ## Note architetturali
 
-- I Livewire component non contengono logica di business: delegano ad Actions/Services
-- Policies registrate in AppServiceProvider con Gate::before per admin bypass
+- Livewire component non contengono logica di business: delegano ad Actions/Services
+- Policy registrate in AppServiceProvider con Gate::before per admin bypass
 - PDF generati da barryvdh/laravel-dompdf con template Blade in `resources/views/pdf/`
 - Firma digitale via `signature_pad` (npm), salvata come SVG nel DB
-- Il numero progressivo commessa usa `lockForUpdate()` per evitare race condition
-- FullCalendar v6 Premium (CC licence) inizializzato in `Alpine.js init()`, non si re-inizializza
-  ad ogni render Livewire; comunicazione via `@this.metodo()` e evento `calendar-refresh`
+- Numero progressivo commessa usa `lockForUpdate()` per evitare race condition
+- FullCalendar v6 Premium (CC licence) inizializzato in `Alpine.js init()`, non si re-inizializza ad ogni render Livewire; comunicazione via `@this.metodo()` e evento `calendar-refresh`
 - Endpoint API agenda in `routes/web.php` (prefisso `api/`), autenticati via sessione Laravel
-- Timer marcatempo lato client in `setInterval` Alpine, timestamp di inizio salvato in JS (non Livewire)
+- Timer marcatempo lato client in `setInterval` Alpine, timestamp inizio salvato in JS (non Livewire)
 - `MarginalitaService::calcola()` usa `costo_orario` dell'utente o `setting.costo_orario_default`
