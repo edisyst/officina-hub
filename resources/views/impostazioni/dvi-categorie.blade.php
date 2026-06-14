@@ -1,5 +1,3 @@
-@extends('layouts.app')
-
-@section('content')
-<livewire:impostazioni.gestione-dvi-categorie />
-@endsection
+<x-app-layout>
+    <livewire:impostazioni.gestione-dvi-categorie />
+</x-app-layout>

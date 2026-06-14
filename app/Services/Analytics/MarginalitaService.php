@@ -196,7 +196,7 @@ class MarginalitaService
                 DB::raw('SUM(commessa_righe.quantita * commessa_righe.prezzo_unitario * (1 - commessa_righe.sconto_percentuale/100)) as ricavo'),
                 DB::raw('SUM(commessa_righe.quantita * commessa_righe.prezzo_acquisto) as costo')
             )
-            ->groupBy('commesse.tipo', 'anno', 'mese')
+            ->groupBy('commesse.tipo', DB::raw($annoExpr), DB::raw($meseExpr))
             ->get();
 
         $mesiIt = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
