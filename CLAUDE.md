@@ -439,7 +439,10 @@ GET  /cliente/{token}             → cliente.portale            (pubblico, URL 
 
 ## Credenziali default (seeder)
 
-- **Admin**: `admin@officinahub.local` / `password`
+- **Admin**: `admin@admin.admin` / `admin`
+- **Accettatore**: `accettatore@accettatore.accettatore` / `admin`
+- **Meccanico**: `meccanico@meccanico.meccanico` / `admin`
+- **Cassa**: `cassa@cassa.cassa` / `admin`
 - Ruoli: `admin`, `accettatore`, `meccanico`, `cassa`
 
 ## Workflow stati commessa
