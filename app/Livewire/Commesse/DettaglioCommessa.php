@@ -50,7 +50,7 @@ class DettaglioCommessa extends Component
     public bool $showStatoAccettazioneModal = false;
     public array $noteAccettazione = [];
 
-    public function mount(int $commessaId): void
+    public function mount(int|string $commessaId): void
     {
         $this->commessa = Commessa::with(['cliente', 'veicolo', 'user', 'righe', 'allegati', 'log.user'])
             ->findOrFail($commessaId);

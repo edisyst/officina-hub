@@ -126,7 +126,6 @@ class FlottaCortesia extends Component
     public function render()
     {
         $veicoli = VeicoloCortesia::withCount(['prestiti', 'prestitiAttivi'])
-            ->withSum('prestiti', 'km_percorsi')
             ->orderBy('targa')
             ->get()
             ->map(function ($v) {

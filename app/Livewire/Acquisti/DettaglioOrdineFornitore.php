@@ -35,7 +35,7 @@ class DettaglioOrdineFornitore extends Component
     public string $ricercaArticolo = '';
     public array $articoliSuggeriti = [];
 
-    public function mount(?int $ordineId = null): void
+    public function mount(int|string|null $ordineId = null): void
     {
         if ($ordineId) {
             $this->ordine = OrdineFornitore::with(['fornitore', 'righe.articolo'])->findOrFail($ordineId);

@@ -177,7 +177,7 @@ class FormCommessa extends Component
 
     // ---
 
-    public function salva(): void
+    public function salva()
     {
         $this->validate();
 
