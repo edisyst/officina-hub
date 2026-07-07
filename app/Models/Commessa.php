@@ -40,6 +40,7 @@ class Commessa extends Model
         'note_accettazione_json',
         'dvi_approvazione_importo',
         'ha_righe_garanzia',
+        'board_position',
     ];
 
     protected function casts(): array

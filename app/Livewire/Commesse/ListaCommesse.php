@@ -17,9 +17,21 @@ class ListaCommesse extends Component
     public string $filtroTipo = '';
     public string $vista = 'tabella'; // tabella | kanban
 
+    public function mount(): void
+    {
+        if (session('commesse_vista') === 'board') {
+            $this->redirect(route('commesse.board'));
+        }
+    }
+
     public function updatingSearch(): void
     {
         $this->resetPage();
+    }
+
+    public function updatingVista(): void
+    {
+        session(['commesse_vista' => 'tabella']);
     }
 
     public function render()

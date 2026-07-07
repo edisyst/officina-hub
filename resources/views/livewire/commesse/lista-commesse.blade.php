@@ -31,8 +31,11 @@
             </button>
             <button wire:click="$set('vista', 'kanban')"
               class="btn {{ $vista === 'kanban' ? 'btn-primary' : 'btn-outline-primary' }}">
-              <i class="fas fa-columns"></i>
+              <i class="fas fa-th-large"></i>
             </button>
+            <a href="{{ route('commesse.board') }}" class="btn btn-outline-secondary" title="Board drag&drop">
+              <i class="fas fa-columns"></i>
+            </a>
           </div>
         </div>
         <div class="col-md-2 text-right">

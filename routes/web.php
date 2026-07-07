@@ -70,6 +70,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:viewAny,App\Models\Commessa')
         ->name('commesse.index');
 
+    Route::get('/commesse/board', fn() => view('commesse.board'))
+        ->middleware('can:viewAny,App\Models\Commessa')
+        ->name('commesse.board');
+
     Route::get('/commesse/create', fn() => view('commesse.create'))
         ->middleware('can:create,App\Models\Commessa')
         ->name('commesse.create');

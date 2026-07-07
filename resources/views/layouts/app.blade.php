@@ -138,14 +138,29 @@
           @endcan
 
           @can('viewAny', \App\Models\Commessa::class)
-          <li class="nav-item">
+          <li class="nav-item has-treeview {{ request()->routeIs('commesse.*') ? 'menu-open' : '' }}">
             <a href="{{ route('commesse.index') }}" class="nav-link {{ request()->routeIs('commesse.*') ? 'active' : '' }}">
               <i class="nav-icon fas fa-clipboard-list"></i>
               <p>
                 Commesse
                 <span id="badge-commesse" class="badge badge-primary right" style="display:none"></span>
+                <i class="fas fa-angle-left right"></i>
               </p>
             </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{{ route('commesse.index') }}" class="nav-link {{ request()->routeIs('commesse.index') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Lista</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{{ route('commesse.board') }}" class="nav-link {{ request()->routeIs('commesse.board') ? 'active' : '' }}">
+                  <i class="fas fa-columns nav-icon"></i>
+                  <p>Board officina</p>
+                </a>
+              </li>
+            </ul>
           </li>
           @endcan
 
