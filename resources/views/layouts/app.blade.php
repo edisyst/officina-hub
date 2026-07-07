@@ -29,6 +29,17 @@
       </li>
     </ul>
     <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <button
+          class="nav-link btn btn-link"
+          title="Ricerca globale (Ctrl+K)"
+          onclick="window.dispatchEvent(new CustomEvent('open-command-palette'))"
+          style="cursor:pointer;border:none;background:none"
+        >
+          <i class="fas fa-search"></i>
+          <span class="d-none d-md-inline ml-1" style="font-size:12px;opacity:.6">Ctrl+K</span>
+        </button>
+      </li>
       <li class="nav-item dropdown">
         <a class="nav-link" data-toggle="dropdown" href="#">
           <i class="far fa-user"></i>
@@ -558,6 +569,7 @@
 <!-- App JS (Alpine + FullCalendar) -->
 @vite(['resources/js/app.js'])
 
+@livewire('command-palette')
 @livewireScripts
 @RegisterServiceWorkerScript
 @stack('scripts')
