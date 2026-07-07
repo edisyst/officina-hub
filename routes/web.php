@@ -30,6 +30,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
+    // Accettazione veicolo one-screen
+    Route::get('/acceptance', fn() => view('acceptance.check-in'))
+        ->middleware('can:create,App\Models\Commessa')
+        ->name('acceptance');
+
     // Analytics
     Route::get('/analytics/meccanici', fn() => view('analytics.meccanici'))
         ->middleware('role:admin')

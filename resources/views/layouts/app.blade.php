@@ -72,6 +72,15 @@
       <nav class="mt-2">
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
 
+          @can('create', \App\Models\Commessa::class)
+          <li class="nav-item">
+            <a href="{{ route('acceptance') }}" class="nav-link {{ request()->routeIs('acceptance') ? 'active' : '' }}">
+              <i class="nav-icon fas fa-car-side"></i>
+              <p>Accettazione</p>
+            </a>
+          </li>
+          @endcan
+
           <li class="nav-item has-treeview {{ request()->routeIs('dashboard') || request()->routeIs('analytics.*') ? 'menu-open' : '' }}">
             <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') || request()->routeIs('analytics.*') ? 'active' : '' }}">
               <i class="nav-icon fas fa-chart-line"></i>

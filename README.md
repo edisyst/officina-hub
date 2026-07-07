@@ -158,6 +158,7 @@ Per aggiungere altri utenti con ruoli diversi (`accettatore`, `meccanico`, `cass
 
 | Area | Funzionalità |
 |---|---|
+| **Accettazione** | One-screen targa→storico→OdL, creazione inline cliente+veicolo, km monotoni, stampa scheda |
 | **Clienti & Veicoli** | Anagrafica, storico commesse |
 | **Commesse** | Flusso bozza → fatturata, firma SVG, PDF scheda/preventivo |
 | **Agenda** | FullCalendar v6, viste giorno/settimana/risorsa, drag & drop |

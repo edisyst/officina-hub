@@ -4,6 +4,21 @@ Panoramica di tutte le aree applicative, con route principali e note operative.
 
 ---
 
+## Accettazione veicolo (one-screen)
+
+Punto d'ingresso quotidiano per l'accettatore: digita la targa e apre l'OdL senza mai cambiare pagina.
+
+**Route:** `GET /acceptance`
+
+- **Stadio 1 — Targa**: input autofocus con match esatto automatico; lista di scelta per match parziali; bottone "Crea nuovo veicolo" se nessun match.
+- **Stadio 2A — Veicolo esistente**: card veicolo + card cliente + timeline ultimi 5 interventi + aggiornamento km (validazione monotona).
+- **Stadio 2B — Nuovo veicolo**: form inline (targa precompilata, lookup targa opzionale) + ricerca cliente esistente o mini-form creazione inline.
+- **Stadio 3 — OdL**: tipo intervento, richieste cliente, data prevista, selettore pacchetti (se attivi), riepilogo sticky.
+- `CheckInVehicleAction`: transazione unica — rollback completo se qualcosa fallisce.
+- "Apri OdL e stampa scheda": apre il PDF scheda di accettazione in nuova scheda dopo il redirect.
+
+---
+
 ## Clienti & Veicoli
 
 Anagrafica clienti (persone fisiche e giuridiche) con storico commesse e veicoli associati.  

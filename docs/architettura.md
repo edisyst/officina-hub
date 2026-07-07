@@ -1,5 +1,14 @@
 # Note architetturali per modulo
 
+## Step 27 — Accettazione veicolo one-screen
+
+- `CheckIn` Livewire a 3 stadi (targa → veicolo → OdL) senza redirect intermedi.
+- `AcceptanceContextService`: feature check `packagesEnabled()` e `plateLookupEnabled()` — assenza dei moduli non rompe il flusso.
+- `CheckInVehicleAction::execute()`: `DB::transaction` unica che crea/aggiorna Cliente, Veicolo (km monotono), Commessa e righe pacchetto; rollback completo su eccezione.
+- Km attuali aggiornati solo se il nuovo valore > valore esistente (validazione server-side al passaggio allo stadio 3).
+- Stampa scheda accettazione: evento JS `apriStampaScheda` apre `pdf.scheda` in nuova scheda dopo il redirect al dettaglio commessa.
+- Targa normalizzata (`strtoupper(trim())`); match esatto avanza automaticamente allo stadio 2A senza click.
+
 ## Step 3 — Magazzino
 
 - `MovimentoMagazzino` immutabile: `$timestamps = false`, nessun update/delete dopo creazione.

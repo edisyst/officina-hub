@@ -1,5 +1,10 @@
 # Route per modulo
 
+## Step 27 — Accettazione veicolo one-screen
+```
+GET  /acceptance   → acceptance   (admin, accettatore)
+```
+
 ## Step 2 — Agenda / Marcatempo
 ```
 GET  /agenda                    → agenda.index         (admin, accettatore)
