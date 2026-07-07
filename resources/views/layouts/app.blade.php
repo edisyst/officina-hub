@@ -160,6 +160,14 @@
                   <p>Board officina</p>
                 </a>
               </li>
+              @if(config('techboard.token'))
+              <li class="nav-item">
+                <a href="{{ route('techboard', config('techboard.token')) }}" target="_blank" class="nav-link">
+                  <i class="fas fa-tv nav-icon"></i>
+                  <p>Tech Board <i class="fas fa-external-link-alt fa-xs ml-1"></i></p>
+                </a>
+              </li>
+              @endif
             </ul>
           </li>
           @endcan

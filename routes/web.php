@@ -349,6 +349,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// Tech Board — monitor a parete, token constant-time, nessun login richiesto
+Route::get('/board/{token}', \App\Livewire\TechBoard::class)
+    ->middleware(\App\Http\Middleware\VerifyTechBoardToken::class)
+    ->name('techboard');
+
 // Portale cliente — URL firmato, nessun login richiesto
 Route::get('/cliente/{token}', [PortaleClienteController::class, 'show'])
     ->name('cliente.portale');
