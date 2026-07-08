@@ -108,6 +108,12 @@
                   <p>Marginalità</p>
                 </a>
               </li>
+              <li class="nav-item">
+                <a href="{{ route('analytics.profitability') }}" class="nav-link {{ request()->routeIs('analytics.profitability') ? 'active' : '' }}">
+                  <i class="fas fa-chart-line nav-icon"></i>
+                  <p>Redditività</p>
+                </a>
+              </li>
               @endhasanyrole
               @hasanyrole('admin|accettatore|cassa')
               <li class="nav-item">

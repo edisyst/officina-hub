@@ -91,6 +91,8 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
+        Gate::define('view-margins', fn ($user) => $user->hasAnyRole(['admin', 'cassa']));
+
         Commessa::observe(CommessaObserver::class);
         CommessaRiga::observe(CommessaRigaObserver::class);
         Documento::observe(DocumentoObserver::class);

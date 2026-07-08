@@ -208,6 +208,15 @@
                 @error('quantita')<div class="invalid-feedback">{{ $message }}</div>@enderror
               </div>
             </div>
+            @if($tipo === 'manodopera')
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Ore prev.</label>
+                <input wire:model="ore_preventivate" type="number" step="0.01" min="0" class="form-control" placeholder="Stima ore">
+                <small class="text-muted">Ore preventivate (budget)</small>
+              </div>
+            </div>
+            @endif
             <div class="col-md-4">
               <div class="form-group">
                 <label>Prezzo Unitario € *</label>

@@ -42,6 +42,9 @@ class GestioneRighe extends Component
     #[Rule('required|numeric|min:0')]
     public float $quantita = 1;
 
+    #[Rule('nullable|numeric|min:0')]
+    public ?float $ore_preventivate = null;
+
     #[Rule('required|numeric|min:0')]
     public float $prezzo_unitario = 0;
 
@@ -86,6 +89,7 @@ class GestioneRighe extends Component
                 'tipo'               => $riga->tipo->value,
                 'descrizione'        => $riga->descrizione,
                 'quantita'           => (float) $riga->quantita,
+                'ore_preventivate'   => $riga->ore_preventivate !== null ? (float) $riga->ore_preventivate : null,
                 'prezzo_unitario'    => (float) $riga->prezzo_unitario,
                 'sconto_percentuale' => (float) $riga->sconto_percentuale,
                 'iva_percentuale'    => (float) $riga->iva_percentuale,
@@ -109,7 +113,7 @@ class GestioneRighe extends Component
                 }
             }
         } else {
-            $this->reset(['tipo', 'descrizione', 'quantita', 'prezzo_unitario', 'sconto_percentuale', 'articolo_id', 'giacenzaDisponibile', 'tariffa_manodopera_id', 'inGaranzia', 'garanziaId', 'casaMadreId']);
+            $this->reset(['tipo', 'descrizione', 'quantita', 'ore_preventivate', 'prezzo_unitario', 'sconto_percentuale', 'articolo_id', 'giacenzaDisponibile', 'tariffa_manodopera_id', 'inGaranzia', 'garanziaId', 'casaMadreId']);
             $this->tipo = 'articolo';
             $this->quantita = 1;
             $this->prezzo_unitario = 0;
@@ -218,6 +222,7 @@ class GestioneRighe extends Component
             'tariffa_manodopera_id' => $this->tipo === 'manodopera' ? $this->tariffa_manodopera_id : null,
             'descrizione'           => $this->descrizione,
             'quantita'              => $this->quantita,
+            'ore_preventivate'      => $this->tipo === 'manodopera' ? $this->ore_preventivate : null,
             'prezzo_unitario'       => $this->prezzo_unitario,
             'sconto_percentuale'    => $this->sconto_percentuale,
             'iva_percentuale'       => $this->iva_percentuale,

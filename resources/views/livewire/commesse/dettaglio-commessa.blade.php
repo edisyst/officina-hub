@@ -122,6 +122,82 @@
     </div>
   </div>
 
+  {{-- Indicatori ore e margini --}}
+  @if(isset($commessaMargins))
+  <div class="row mb-3">
+    {{-- Ore preventivate vs effettive (visibile a tutti) --}}
+    <div class="col-md-4">
+      <div class="info-box">
+        <span class="info-box-icon bg-info elevation-1"><i class="fas fa-clock"></i></span>
+        <div class="info-box-content">
+          <span class="info-box-text">Ore lavorate</span>
+          <span class="info-box-number">
+            {{ number_format($commessaMargins->oreEffettive, 1) }}
+            @if($commessaMargins->orePreventivate > 0)
+            / {{ number_format($commessaMargins->orePreventivate, 1) }} prev.
+            @endif
+          </span>
+          @if($commessaMargins->orePreventivate > 0)
+          <div class="progress">
+            <div class="progress-bar {{ $commessaMargins->oreInBudget() ? 'bg-success' : 'bg-danger' }}"
+              style="width: {{ min($commessaMargins->progressoOrePerc(), 100) }}%"></div>
+          </div>
+          <span class="progress-description">
+            {{ $commessaMargins->progressoOrePerc() }}%
+            @if($commessaMargins->deltaOre > 0)
+            <span class="text-danger">(+{{ number_format($commessaMargins->deltaOre, 1) }}h sforato)</span>
+            @endif
+          </span>
+          @endif
+        </div>
+      </div>
+    </div>
+
+    @can('view-margins')
+    {{-- Margine ricambi --}}
+    <div class="col-md-4">
+      <div class="info-box">
+        <span class="info-box-icon {{ $commessaMargins->margineRicambiPerc >= 30 ? 'bg-success' : ($commessaMargins->margineRicambiPerc >= 10 ? 'bg-warning' : 'bg-danger') }} elevation-1">
+          <i class="fas fa-boxes"></i>
+        </span>
+        <div class="info-box-content">
+          <span class="info-box-text">Margine ricambi</span>
+          <span class="info-box-number">
+            {{ number_format($commessaMargins->margineRicambiPerc, 1) }}%
+          </span>
+          <span class="progress-description text-muted small">
+            € {{ number_format($commessaMargins->margineRicambi, 2, ',', '.') }}
+            su € {{ number_format($commessaMargins->ricavoRicambi, 2, ',', '.') }}
+            @if($commessaMargins->righeRicambiSenzaCosto > 0)
+            <span class="text-warning">({{ $commessaMargins->righeRicambiSenzaCosto }} righe senza costo)</span>
+            @endif
+          </span>
+        </div>
+      </div>
+    </div>
+
+    {{-- Margine totale --}}
+    <div class="col-md-4">
+      <div class="info-box">
+        <span class="info-box-icon {{ $commessaMargins->margineTotalePerc >= 40 ? 'bg-success' : ($commessaMargins->margineTotalePerc >= 20 ? 'bg-warning' : 'bg-danger') }} elevation-1">
+          <i class="fas fa-chart-line"></i>
+        </span>
+        <div class="info-box-content">
+          <span class="info-box-text">Margine totale</span>
+          <span class="info-box-number">
+            {{ number_format($commessaMargins->margineTotalePerc, 1) }}%
+          </span>
+          <span class="progress-description text-muted small">
+            € {{ number_format($commessaMargins->margineTotale, 2, ',', '.') }}
+            su € {{ number_format($commessaMargins->ricavoTotale, 2, ',', '.') }}
+          </span>
+        </div>
+      </div>
+    </div>
+    @endcan
+  </div>
+  @endif
+
   {{-- Alert Garanzie Attive --}}
   @if($garanzieAttive->count() > 0)
   <div class="alert alert-warning mt-2 mb-2 py-2">

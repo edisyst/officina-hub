@@ -41,6 +41,7 @@ class Commessa extends Model
         'dvi_approvazione_importo',
         'ha_righe_garanzia',
         'board_position',
+        'data_ora_consegna_prevista',
     ];
 
     protected function casts(): array
@@ -51,7 +52,8 @@ class Commessa extends Model
             'stato_carrozzeria'     => StatoCarrozzeria::class,
             'data_ingresso'          => 'datetime',
             'data_uscita_prevista'   => 'date',
-            'data_consegna'          => 'datetime',
+            'data_consegna'                => 'datetime',
+            'data_ora_consegna_prevista'   => 'datetime',
             'note_accettazione_json' => 'array',
             'ha_righe_garanzia'      => 'boolean',
         ];

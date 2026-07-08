@@ -48,6 +48,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('role:admin|accettatore|cassa')
         ->name('analytics.commesse');
 
+    Route::get('/analytics/profitability', fn() => view('analytics.profitability'))
+        ->middleware('can:view-margins')
+        ->name('analytics.profitability');
+
     // Alias rotta dashboard KPI
     Route::get('/analytics/dashboard', fn() => view('analytics.dashboard'))
         ->name('analytics.dashboard');

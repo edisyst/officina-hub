@@ -22,6 +22,7 @@ class CommessaRiga extends Model
         'prezzo_acquisto',
         'sconto_percentuale',
         'iva_percentuale',
+        'ore_preventivate',
         'ordinamento',
         'in_garanzia',
         'garanzia_id',
@@ -32,6 +33,7 @@ class CommessaRiga extends Model
     {
         return [
             'tipo'               => TipoRiga::class,
+            'ore_preventivate'   => 'decimal:2',
             'quantita'           => 'decimal:2',
             'prezzo_unitario'    => 'decimal:2',
             'prezzo_acquisto'    => 'decimal:2',

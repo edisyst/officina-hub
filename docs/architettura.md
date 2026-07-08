@@ -1,5 +1,17 @@
 # Note architetturali per modulo
 
+## Step 28 — Ore preventivate vs effettive e marginalità OdL
+
+- `commessa_righe.ore_preventivate` decimal(6,2) nullable: budget ore per riga manodopera (distinto da `quantita` = ore fatturate).
+- `commessa_righe.prezzo_acquisto` già esistente: snapshot costo ricambio al momento dell'aggiunta. `CommessaRigaObserver::creating()` lo copia da `articolo.prezzo_acquisto` se 0/null — non sovrascrive valori manuali.
+- `commesse.data_ora_consegna_prevista` datetime nullable: aggiunta separata da `data_uscita_prevista` (date) esistente per non rompere codice esistente.
+- `MarginCalculatorService` in `app/Services/Commesse/`: restituisce `CommessaMargins` DTO con ricavi/costi/margini separati per ricambi e manodopera, ore (preventivate/effettive/delta), conteggi trasparenza righe senza dati.
+- `config('margins.labor_cost_per_hour')` (env `LABOR_COST_PER_HOUR`): se null, `costoManodopera` nel DTO è null e i margini mostrano solo il ricavo. Il costo per-meccanico (`users.costo_orario`) ha priorità sul config.
+- Ore effettive: da `lavorazioni.minuti_effettivi` (time tracking Step 2). Ore preventivate: da `commessa_righe.ore_preventivate` (sum righe manodopera).
+- Gate `view-margins` (admin + cassa): registrato in `AppServiceProvider`. Admin bypassa comunque via `Gate::before`. Le info-box ore sono visibili a tutti; i valori economici solo ai ruoli con gate.
+- `Livewire\Reports\Profitability`: filtri data/meccanico/stato, tabella per meccanico (ore, efficienza), tabella OdL paginata, export CSV streaming UTF-8+BOM. Query usa `concatExpr()` helper per compatibilità MySQL/SQLite.
+- Info-box nell'OdL (`dettaglio-commessa.blade.php`): aggiornate a ogni render Livewire via `MarginCalculatorService` (già nel `mount()` e nel `render()` di `DettaglioCommessa`).
+
 ## Step 27 — Accettazione veicolo one-screen
 
 - `CheckIn` Livewire a 3 stadi (targa → veicolo → OdL) senza redirect intermedi.

@@ -1,5 +1,10 @@
 # Route per modulo
 
+## Step 28 — Redditività OdL
+```
+GET  /analytics/profitability   → analytics.profitability   (admin, cassa — gate view-margins)
+```
+
 ## Step 27 — Accettazione veicolo one-screen
 ```
 GET  /acceptance   → acceptance   (admin, accettatore)
@@ -61,11 +66,12 @@ GET  /allegati/perizie/{filename}        → allegati.perizia           autentic
 
 ## Step 8 — Analytics
 ```
-GET  /dashboard                  → analytics.dashboard   (tutti)
-GET  /analytics/meccanici        → analytics.meccanici   (admin)
-GET  /analytics/marginalita      → analytics.marginalita (admin, cassa)
-GET  /analytics/commesse         → analytics.commesse    (admin, accettatore, cassa)
-GET  /api/menu-badges            → api.menu-badges       (auth, JSON)
+GET  /dashboard                  → analytics.dashboard      (tutti)
+GET  /analytics/meccanici        → analytics.meccanici      (admin)
+GET  /analytics/marginalita      → analytics.marginalita    (admin, cassa)
+GET  /analytics/commesse         → analytics.commesse       (admin, accettatore, cassa)
+GET  /analytics/profitability    → analytics.profitability  (admin, cassa — gate view-margins)
+GET  /api/menu-badges            → api.menu-badges          (auth, JSON)
 ```
 
 ## Step 10 — DVI

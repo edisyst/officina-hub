@@ -11,6 +11,8 @@ use App\Enums\StatoCommessa;
 use App\Enums\TipoCommessa;
 use App\Models\Commessa;
 use App\Models\Documento;
+use App\DataTransferObjects\CommessaMargins;
+use App\Services\Commesse\MarginCalculatorService;
 use App\Services\MarginalitaService;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -20,6 +22,7 @@ class DettaglioCommessa extends Component
     public Commessa $commessa;
     public string $tabAttiva = 'lavorazioni';
     public array $marginalita = [];
+    public ?CommessaMargins $commessaMargins = null;
 
     // Modal transizione stato
     public bool $showTransizioneModal = false;
@@ -57,6 +60,10 @@ class DettaglioCommessa extends Component
 
         if (auth()->user()->hasAnyRole(['admin', 'cassa'])) {
             $this->marginalita = app(MarginalitaService::class)->calcola($this->commessa);
+        }
+
+        if (auth()->user()->can('view-margins')) {
+            $this->commessaMargins = app(MarginCalculatorService::class)->calcola($this->commessa);
         }
 
         if ($this->commessa->tipo === TipoCommessa::Carrozzeria) {
@@ -326,6 +333,7 @@ class DettaglioCommessa extends Component
 
         return view('livewire.commesse.dettaglio-commessa', [
             'marginalita'     => $this->marginalita,
+            'commessaMargins' => $this->commessaMargins,
             'fasiCarrozzeria' => StatoCarrozzeria::inOrdine(),
             'garanzieAttive'  => $garanzieAttive,
         ]);
