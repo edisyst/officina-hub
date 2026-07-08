@@ -44,9 +44,12 @@ use App\Policies\ScadenzaPolicy;
 use App\Policies\SinistroPolicy;
 use App\Policies\VeicoloPolicy;
 use App\Policies\VeicoloCortesiaPolicy;
+use App\Listeners\LogOutboundNotification;
 use App\Services\MailConfigService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\Events\NotificationSent;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -92,6 +95,8 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::define('view-margins', fn ($user) => $user->hasAnyRole(['admin', 'cassa']));
+
+        Event::listen(NotificationSent::class, LogOutboundNotification::class);
 
         Commessa::observe(CommessaObserver::class);
         CommessaRiga::observe(CommessaRigaObserver::class);

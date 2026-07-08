@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\StatoCarrozzeria;
 use App\Enums\StatoCommessa;
 use App\Enums\TipoCommessa;
+use App\Models\Communication;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -100,6 +101,11 @@ class Commessa extends Model
     public function log()
     {
         return $this->hasMany(CommessaLog::class)->latest();
+    }
+
+    public function communications()
+    {
+        return $this->hasMany(Communication::class, 'work_order_id')->latest('occurred_at');
     }
 
     public function appuntamenti()

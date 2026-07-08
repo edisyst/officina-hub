@@ -294,6 +294,24 @@
         @endif
       </a>
     </li>
+    @php
+      $commCnt     = \App\Models\Communication::where('customer_id', $commessa->cliente_id)
+          ->where(fn($q) => $q->where('work_order_id', $commessa->id)->orWhereNull('work_order_id'))
+          ->count();
+      $commLastAt  = \App\Models\Communication::where('customer_id', $commessa->cliente_id)
+          ->where(fn($q) => $q->where('work_order_id', $commessa->id)->orWhereNull('work_order_id'))
+          ->max('occurred_at');
+    @endphp
+    <li class="nav-item">
+      <a class="nav-link {{ $tabAttiva === 'comunicazioni' ? 'active' : '' }}"
+        wire:click="$set('tabAttiva', 'comunicazioni')" href="#"
+        @if($commLastAt) title="Ultima: {{ \Carbon\Carbon::parse($commLastAt)->format('d/m/Y H:i') }}" @endif>
+        <i class="fas fa-comments mr-1"></i> Comunicazioni
+        @if($commCnt > 0)
+        <span class="badge badge-info">{{ $commCnt }}</span>
+        @endif
+      </a>
+    </li>
   </ul>
 
   <div class="tab-content border border-top-0 p-3 bg-white">
@@ -363,6 +381,8 @@
     </div>
     @elseif($tabAttiva === 'dvi')
     <livewire:dvi.dettaglio-dvi :commessa-id="$commessa->id" :key="'dvi-'.$commessa->id" />
+    @elseif($tabAttiva === 'comunicazioni')
+    <livewire:communications.timeline :customer-id="$commessa->cliente_id" :work-order-id="$commessa->id" :key="'comm-'.$commessa->id" />
     @elseif($tabAttiva === 'carrozzeria' && $commessa->tipo === \App\Enums\TipoCommessa::Carrozzeria)
     {{-- ── BARRA PROGRESSO FASI CARROZZERIA ──────────────────────────────── --}}
     <div class="mb-4">

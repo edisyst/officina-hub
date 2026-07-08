@@ -247,6 +247,16 @@
     </div>
   </div>
 
+  <!-- Timeline Comunicazioni -->
+  <div class="card" id="tab-comunicazioni">
+    <div class="card-header">
+      <h3 class="card-title"><i class="fas fa-comments mr-1 text-info"></i> Comunicazioni</h3>
+    </div>
+    <div class="card-body">
+      <livewire:communications.timeline :customer-id="$cliente->id" :key="'comm-cli-'.$cliente->id" />
+    </div>
+  </div>
+
   <!-- Modal Associa Veicolo -->
   @if($showAssociaModal)
   <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">

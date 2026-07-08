@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\SegmentoCrm;
 use App\Enums\TipoCliente;
+use App\Models\Communication;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -72,6 +73,11 @@ class Cliente extends Model
     public function crmNote()
     {
         return $this->hasMany(CrmNota::class)->latest('data_interazione');
+    }
+
+    public function communications()
+    {
+        return $this->hasMany(Communication::class, 'customer_id')->latest('occurred_at');
     }
 
     public function campagnaInvii()

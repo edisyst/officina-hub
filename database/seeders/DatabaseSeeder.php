@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             PacchettiServizioSeeder::class,
             CaseMadriSeeder::class,
             PricingSeeder::class,
+            CommunicationSeeder::class,
         ]);
     }
 }
