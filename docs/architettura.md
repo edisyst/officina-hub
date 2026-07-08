@@ -1,5 +1,19 @@
 # Note architetturali per modulo
 
+## Step 29 — Matrici prezzi ricambi e tariffe orarie manodopera
+
+- **Tabelle:** `matrici_prezzo`, `matrici_prezzo_scaglioni`, `tariffe_orarie`. `commessa_righe` ha `tariffa_oraria_id` FK nullable come riferimento (snapshot del valore resta in `prezzo_unitario`).
+- **`TariffaOraria`** ≠ `TariffaManodopera`: la prima è una semplice tariffa oraria nominata (Meccanica/Elettrauto/…) che precompila `prezzo_unitario`; la seconda è il catalogo operazioni con `minuti_standard` e `prezzo_listino`.
+- **Bordi scaglione documentati:** `costo_da` inclusivo (≥), `costo_a` esclusivo (<). L'ultimo scaglione ha `costo_a = null` (aperto, cattura tutti i costi superiori). `validateScaglioni()` rifiuta buchi, overlap, costo_a null non in coda.
+- **`MatricePrezzoService::suggestPrice()`**: null se nessuna matrice default attiva o costo ≤ 0. Arrotondamento per eccesso al multiplo (0.10 / 0.50 / 1.00).
+- **`MatricePrezzoService::setDefault()`**: transazionale — togli il flag da tutte, poi imposta la nuova.
+- **Auto-suggerimento in `CommessaRigaObserver::creating()`**: se `tipo=Articolo`, `prezzo_unitario=0` e `prezzo_acquisto` disponibile, valorizza `prezzo_unitario` dalla matrice default. Non sovrascrive valori manuali.
+- **Badge UI in OdL:** "matrice" (verde) se `prezzo_unitario ≈ suggestPrice(prezzo_acquisto)`; "manuale" (giallo) se modificato. Pulsante "Riapplica matrice" ricalcola al click.
+- **Tariffa oraria su riga manodopera:** select nelle tariffe attive; selezionando precompila `prezzo_unitario`. Modifica manuale possibile. Default pre-selezionato all'apertura modal nuova riga.
+- **Invariante:** cambiare matrice/tariffa NON tocca gli OdL già esistenti — il prezzo è uno snapshot sulla riga.
+- **Un solo default:** applicativo (non DB constraint); `setDefault()` usa transaction; `toggleAttiva()` blocca disattivazione se `is_default=true`.
+- **Seeder `PricingSeeder`:** matrice "Standard" con 4 scaglioni realistici (default); tariffe Meccanica/Elettrauto/Carrozzeria.
+
 ## Step 28 — Ore preventivate vs effettive e marginalità OdL
 
 - `commessa_righe.ore_preventivate` decimal(6,2) nullable: budget ore per riga manodopera (distinto da `quantita` = ore fatturate).

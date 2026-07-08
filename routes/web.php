@@ -250,6 +250,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/impostazioni/dvi-categorie', fn() => view('impostazioni.dvi-categorie'))->name('impostazioni.dvi-categorie');
         Route::get('/impostazioni/tariffe', fn() => view('impostazioni.tariffe'))->name('impostazioni.tariffe');
         Route::get('/impostazioni/pacchetti', fn() => view('impostazioni.pacchetti'))->name('impostazioni.pacchetti');
+        Route::get('/impostazioni/listini', fn() => view('impostazioni.listini'))->name('impostazioni.listini');
         Route::get('/analytics/pacchetti', fn() => view('analytics.pacchetti'))->name('analytics.pacchetti');
 
         // Test connessione lookup targa

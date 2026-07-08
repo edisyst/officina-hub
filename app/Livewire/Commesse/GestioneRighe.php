@@ -12,6 +12,8 @@ use App\Models\Garanzia;
 use App\Models\PacchettoServizio;
 use App\Models\Setting;
 use App\Models\TariffaManodopera;
+use App\Models\TariffaOraria;
+use App\Services\Pricing\MatricePrezzoService;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 
@@ -35,6 +37,9 @@ class GestioneRighe extends Component
     public string $cercaTariffa = '';
     public array $suggerimentiTariffe = [];
     public ?int $tariffa_manodopera_id = null;
+
+    // Tariffa oraria nominata
+    public ?int $tariffa_oraria_id = null;
 
     #[Rule('required|string|max:255')]
     public string $descrizione = '';
@@ -82,6 +87,7 @@ class GestioneRighe extends Component
         $this->suggerimentiTariffe = [];
         $this->cercaTariffa = '';
         $this->tariffa_manodopera_id = null;
+        $this->tariffa_oraria_id = null;
 
         if ($id) {
             $riga = CommessaRiga::with('articolo')->findOrFail($id);
@@ -95,6 +101,7 @@ class GestioneRighe extends Component
                 'iva_percentuale'    => (float) $riga->iva_percentuale,
                 'articolo_id'        => $riga->articolo_id,
                 'tariffa_manodopera_id' => $riga->tariffa_manodopera_id,
+                'tariffa_oraria_id'  => $riga->tariffa_oraria_id,
                 'inGaranzia'         => (bool) $riga->in_garanzia,
                 'garanziaId'         => $riga->garanzia_id,
                 'casaMadreId'        => $riga->casa_madre_id,
@@ -113,7 +120,7 @@ class GestioneRighe extends Component
                 }
             }
         } else {
-            $this->reset(['tipo', 'descrizione', 'quantita', 'ore_preventivate', 'prezzo_unitario', 'sconto_percentuale', 'articolo_id', 'giacenzaDisponibile', 'tariffa_manodopera_id', 'inGaranzia', 'garanziaId', 'casaMadreId']);
+            $this->reset(['tipo', 'descrizione', 'quantita', 'ore_preventivate', 'prezzo_unitario', 'sconto_percentuale', 'articolo_id', 'giacenzaDisponibile', 'tariffa_manodopera_id', 'tariffa_oraria_id', 'inGaranzia', 'garanziaId', 'casaMadreId']);
             $this->tipo = 'articolo';
             $this->quantita = 1;
             $this->prezzo_unitario = 0;
@@ -135,7 +142,13 @@ class GestioneRighe extends Component
         $this->suggerimentiTariffe = [];
 
         if ($this->tipo === 'manodopera' && ! $this->editingId) {
-            $this->prezzo_unitario = (float) Setting::get('costo_orario_default', 45);
+            $default = TariffaOraria::attive()->where('is_default', true)->first();
+            if ($default) {
+                $this->tariffa_oraria_id = $default->id;
+                $this->prezzo_unitario   = (float) $default->tariffa_oraria;
+            } else {
+                $this->prezzo_unitario = (float) Setting::get('costo_orario_default', 45);
+            }
         }
         if ($this->tipo === 'nota') {
             $this->prezzo_unitario = 0;
@@ -200,6 +213,27 @@ class GestioneRighe extends Component
         $this->suggerimentiTariffe = [];
     }
 
+    public function updatedTariffaOrariaId(): void
+    {
+        if ($this->tariffa_oraria_id) {
+            $t = TariffaOraria::find($this->tariffa_oraria_id);
+            if ($t) {
+                $this->prezzo_unitario = (float) $t->tariffa_oraria;
+            }
+        }
+    }
+
+    public function riapplicaMatrice(): void
+    {
+        if (! $this->articolo_id) return;
+        $articolo = \App\Models\Articolo::find($this->articolo_id);
+        if (! $articolo) return;
+        $suggerito = app(MatricePrezzoService::class)->suggestPrice($articolo->prezzo_acquisto);
+        if ($suggerito !== null) {
+            $this->prezzo_unitario = (float) $suggerito;
+        }
+    }
+
     public function updatedQuantita(): void
     {
         $this->aggiornaAvvisoGiacenza();
@@ -220,6 +254,7 @@ class GestioneRighe extends Component
             'tipo'                  => $this->tipo,
             'articolo_id'           => $this->tipo === 'articolo' ? $this->articolo_id : null,
             'tariffa_manodopera_id' => $this->tipo === 'manodopera' ? $this->tariffa_manodopera_id : null,
+            'tariffa_oraria_id'     => $this->tipo === 'manodopera' ? $this->tariffa_oraria_id : null,
             'descrizione'           => $this->descrizione,
             'quantita'              => $this->quantita,
             'ore_preventivate'      => $this->tipo === 'manodopera' ? $this->ore_preventivate : null,
@@ -371,13 +406,25 @@ class GestioneRighe extends Component
             ? Garanzia::attive()->perVeicolo($this->commessa->veicolo->id)->with('casaMadre')->get()
             : collect();
 
-        $caseMadri = CasaMadre::orderBy('ragione_sociale')->get();
+        $caseMadri     = CasaMadre::orderBy('ragione_sociale')->get();
+        $tariffeOrarie = TariffaOraria::attive()->orderByDesc('is_default')->orderBy('nome')->get();
+
+        // Calcola prezzo suggerito per ogni riga articolo (per il badge matrice/manuale)
+        $matriceService  = app(MatricePrezzoService::class);
+        $prezziSuggeriti = $righe->mapWithKeys(function ($r) use ($matriceService) {
+            if ($r->tipo->value === 'articolo' && $r->prezzo_acquisto) {
+                return [$r->id => $matriceService->suggestPrice($r->prezzo_acquisto)];
+            }
+            return [$r->id => null];
+        });
 
         return view('livewire.commesse.gestione-righe', [
-            'righe'         => $righe,
-            'tipiRiga'      => TipoRiga::cases(),
-            'garanzieAttive'=> $garanzieAttive,
-            'caseMadri'     => $caseMadri,
+            'righe'          => $righe,
+            'tipiRiga'       => TipoRiga::cases(),
+            'garanzieAttive' => $garanzieAttive,
+            'caseMadri'      => $caseMadri,
+            'tariffeOrarie'  => $tariffeOrarie,
+            'prezziSuggeriti' => $prezziSuggeriti,
         ]);
     }
 }

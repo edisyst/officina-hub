@@ -542,6 +542,12 @@
                   <p>Case Madri</p>
                 </a>
               </li>
+              <li class="nav-item">
+                <a href="{{ route('impostazioni.listini') }}" class="nav-link {{ request()->routeIs('impostazioni.listini') ? 'active' : '' }}">
+                  <i class="fas fa-percent nav-icon"></i>
+                  <p>Listini e tariffe</p>
+                </a>
+              </li>
             </ul>
           </li>
           @endrole

@@ -1,5 +1,12 @@
 # Route per modulo
 
+## Step 29 — Matrici prezzi manodopera e ricambi
+```
+GET  /impostazioni/listini   → impostazioni.listini   (admin)
+     ?tab=matrici            → Livewire MatriciPrezzo
+     ?tab=tariffe            → Livewire TariffeOrarie
+```
+
 ## Step 28 — Redditività OdL
 ```
 GET  /analytics/profitability   → analytics.profitability   (admin, cassa — gate view-margins)

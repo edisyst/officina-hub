@@ -15,6 +15,7 @@ class CommessaRiga extends Model
         'tipo',
         'articolo_id',
         'tariffa_manodopera_id',
+        'tariffa_oraria_id',
         'pacchetto_servizio_id',
         'descrizione',
         'quantita',
@@ -61,6 +62,11 @@ class CommessaRiga extends Model
     public function pacchetto()
     {
         return $this->belongsTo(PacchettoServizio::class, 'pacchetto_servizio_id');
+    }
+
+    public function tariffaOraria()
+    {
+        return $this->belongsTo(TariffaOraria::class, 'tariffa_oraria_id');
     }
 
     public function garanzia()

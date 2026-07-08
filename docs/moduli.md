@@ -195,7 +195,7 @@ Dashboard con KPI in tempo reale; report meccanici, marginalità, commesse, pacc
 
 ## Tariffe & Pacchetti Servizio
 
-Listino tariffe manodopera e pacchetti servizio predefiniti applicabili alle commesse.
+Listino tariffe manodopera (catalogo operazioni) e pacchetti servizio predefiniti applicabili alle commesse.
 
 **Route:** `/impostazioni/tariffe`, `/impostazioni/pacchetti`, `/analytics/pacchetti`
 
@@ -204,6 +204,28 @@ Listino tariffe manodopera e pacchetti servizio predefiniti applicabili alle com
 - `ApplicaPacchettoAction`: modal 2 step (ricerca + preview righe modificabili) prima della conferma
 - Import/export CSV tariffe con BOM UTF-8; delimitatore `;`
 - Seeder: 31 tariffe comuni + 3 pacchetti di esempio
+
+---
+
+## Listini e Tariffe (Prezzi automatici)
+
+Matrici di ricarico a scaglioni per il calcolo automatico del prezzo di vendita ricambi, e tariffe orarie nominate per le righe di manodopera.
+
+**Route:** `GET /impostazioni/listini` (tab `matrici` / `tariffe`)
+
+### Matrici prezzo ricambi
+- Scaglioni contigui: `costo_da` inclusivo (≥), `costo_a` esclusivo (<), ultimo scaglione aperto (`costo_a null`)
+- Markup percentuale + arrotondamento per eccesso (0.10 / 0.50 / 1.00 / nessuno)
+- Anteprima live nel modal di editing: inserisci un costo e vedi il prezzo suggerito in tempo reale
+- Una sola matrice può essere "default"; cambio con `MatricePrezzoService::setDefault()` transazionale
+- Su nuova riga ricambio: `prezzo_unitario` auto-calcolato dalla matrice default se non specificato manualmente
+- Badge "matrice" / "manuale" nell'OdL; pulsante "Riapplica matrice" per ricalcolare
+
+### Tariffe orarie manodopera
+- Tariffe orarie nominate (Meccanica, Elettrauto, Carrozzeria…) distinte dal catalogo operazioni `TariffaManodopera`
+- Select nel modal riga manodopera precompila `prezzo_unitario`; modifica manuale sempre possibile
+- Default pre-selezionato su nuova riga se presente
+- `tariffa_oraria_id` su `commessa_righe`: solo riferimento per reportistica, il valore è snapshot in `prezzo_unitario`
 
 ---
 

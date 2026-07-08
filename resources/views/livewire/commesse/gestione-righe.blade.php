@@ -38,6 +38,13 @@
           @if($riga->articolo)
           <small class="text-muted ml-1">[{{ $riga->articolo->codice }}]</small>
           @endif
+          @if($riga->tipo->value === 'articolo' && $prezziSuggeriti[$riga->id] !== null)
+            @if(abs((float)$riga->prezzo_unitario - (float)$prezziSuggeriti[$riga->id]) < 0.005)
+              <span class="badge badge-info ml-1" title="Prezzo calcolato dalla matrice">matrice</span>
+            @else
+              <span class="badge badge-warning ml-1" title="Prezzo modificato manualmente">manuale</span>
+            @endif
+          @endif
           @if($riga->in_garanzia)
           <span class="badge badge-warning ml-1"><i class="fas fa-shield-alt mr-1"></i>Garanzia</span>
           @if($riga->casaMadre)
@@ -134,8 +141,18 @@
           </div>
 
           @if($tipo === 'manodopera')
+          <div class="form-group">
+            <label>Tariffa oraria</label>
+            <select wire:model.live="tariffa_oraria_id" class="form-control form-control-sm">
+              <option value="">— Nessuna (inserimento manuale) —</option>
+              @foreach($tariffeOrarie as $to)
+              <option value="{{ $to->id }}">{{ $to->nome }} — € {{ number_format($to->tariffa_oraria, 2, ',', '.') }}/h</option>
+              @endforeach
+            </select>
+            <small class="text-muted">Seleziona per precompilare la tariffa oraria.</small>
+          </div>
           <div class="form-group position-relative">
-            <label>Cerca dal tariffario</label>
+            <label>Cerca dal tariffario (operazioni)</label>
             <input wire:model.live.debounce.300ms="cercaTariffa" type="text"
               class="form-control form-control-sm"
               placeholder="Cerca per codice o descrizione…"
@@ -222,6 +239,11 @@
                 <label>Prezzo Unitario € *</label>
                 <input wire:model="prezzo_unitario" type="number" step="0.01" class="form-control @error('prezzo_unitario') is-invalid @enderror">
                 @error('prezzo_unitario')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                @if($tipo === 'articolo' && $articolo_id)
+                <button type="button" wire:click="riapplicaMatrice" class="btn btn-xs btn-outline-info mt-1">
+                  <i class="fas fa-sync-alt"></i> Riapplica matrice
+                </button>
+                @endif
               </div>
             </div>
             <div class="col-md-4">

@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             TariffeManodoperaSeeder::class,
             PacchettiServizioSeeder::class,
             CaseMadriSeeder::class,
+            PricingSeeder::class,
         ]);
     }
 }
