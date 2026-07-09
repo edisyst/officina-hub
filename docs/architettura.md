@@ -1,5 +1,18 @@
 # Note architetturali per modulo
 
+## Step 33 — Suggerimenti contestuali da storico veicolo
+
+- **`outcome` su `commessa_righe`** enum('completed','declined') default 'completed'. Righe `declined` escluse da: totali commessa (`getTotaleImponibileAttribute` ecc.), PDF scheda/preventivo (filter collection `where('outcome','!=','declined')`), `MarginalitaService::calcola()` (loop collezione), `MarginalitaService` query DB aggregata (WHERE clause). Scope `CommessaRiga::completed()` per query dirette.
+- **`CommessaRigaObserver::updated()`**: quando `outcome` cambia a `declined` crea `VehicleRecommendation(source=declined)` se non esiste già pending equivalente; quando torna `completed` soft-deletes la recommendation pending corrispondente (reversibile prima della chiusura OdL).
+- **`VeicoloObserver::updated()`**: triggera `RecommendationEngineService::refreshFor()` su ogni cambio `km_attuali`.
+- **`RecommendationEngineService::refreshFor(Veicolo)`**: idempotente — non crea mai duplicati pending (stessa `source + title + vehicle_id`). Tre sorgenti:
+  - *declined*: gestita dall'Observer, non dall'engine.
+  - *deadline*: query `scadenze` entro `config('recommendations.deadline_horizon_days', 60)` giorni. Feature-check `Schema::hasTable('scadenze')` — se assente, la sorgente viene saltata silenziosamente.
+  - *mileage*: per ogni `MaintenanceRule` attiva, cerca ultima esecuzione con doppio lookup: 1) `VehicleRecommendation` accepted con `resolved_work_order_id` + titolo match; 2) fuzzy case-insensitive su `LOWER(commessa_righe.descrizione)` delle commesse del veicolo. Crea recommendation se `km_attuali − km_ultima ≥ every_km` (o mesi trascorsi ≥ `every_months`, o nessuna storia).
+- **`Livewire\Recommendations\Panel`**: montato nel dettaglio OdL sopra i tab, solo se `commessa->veicolo_id` presente. `mount()` triggera `refreshEngine()` (lazy). Azioni: `addToWorkOrder()` crea `CommessaRiga(tipo=manodopera, outcome=completed)` + segna recommendation `accepted + resolved_work_order_id`; `confirmDismiss()` segna `dismissed` con motivo opzionale.
+- **`Livewire\Impostazioni\GestioneManutenzioni`**: CRUD standard (no sortable). Validazione via `MaintenanceRuleRequest` — almeno uno tra `every_km` e `every_months` obbligatorio (custom `withValidator`).
+- **Feature check scadenzario**: `Schema::hasTable('scadenze')` nel service — non in `boot()` del provider (evita query durante CLI migrate).
+
 ## Step 32 — Bulk actions e inline editing tabelle
 
 - **`WithBulkSelection` trait** (`app/Livewire/Concerns/`): `selectedIds[]`, `selectPage`, `selectAll`. Il flag `selectAll=true` rappresenta "tutti i risultati del filtro corrente" (Gmail-style) — gli ID non sono materializzati; `resolveIds()` esegue la query filtro al momento dell'azione. Reset automatico di selezione e pagina a ogni cambio filtro/ricerca.

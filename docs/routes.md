@@ -1,5 +1,12 @@
 # Route per modulo
 
+## Step 33 — Suggerimenti contestuali da storico veicolo
+```
+GET  /impostazioni/manutenzioni   → impostazioni.manutenzioni   (admin)
+     Livewire GestioneManutenzioni — CRUD maintenance_rules
+```
+Pannello "Da valutare" montato inline nel dettaglio OdL (Livewire component, nessuna route dedicata).
+
 ## Step 32 — Bulk actions e inline editing tabelle
 
 Estensioni delle pagine esistenti — nessuna voce di menu nuova.

@@ -4,6 +4,38 @@ Panoramica di tutte le aree applicative, con route principali e note operative.
 
 ---
 
+## Suggerimenti contestuali da storico veicolo (Step 33)
+
+Pannello "Da valutare" nell'OdL: ricorda al banco i lavori declinati in passato, le scadenze imminenti e le manutenzioni per chilometraggio. Motore delle "opportunità mancate" basato interamente su dati interni (zero API esterne).
+
+**Route:** `GET /impostazioni/manutenzioni` (admin) — CRUD regole manutenzione ricorrente.  
+Il pannello è un Livewire component inline nel dettaglio OdL, senza route propria.
+
+### Righe declined
+- Su ogni riga manodopera dell'OdL appare il pulsante **🚫 ban**: toggle `outcome` tra `completed` e `declined`.
+- Righe `declined` sono visibili in grigio con badge rosso ma **escluse da totali, PDF e margini**.
+- Observer su `CommessaRiga` crea automaticamente una `VehicleRecommendation(source=declined)` quando outcome→declined; la rimuove (soft-delete) se la riga torna completed prima della chiusura.
+
+### Engine (RecommendationEngineService)
+Tre sorgenti, tutte idempotenti (no duplicati pending):
+1. **declined** — gestita dall'Observer, non dall'engine.
+2. **deadline** — scadenze del veicolo (`scadenze`) entro 60 giorni (configurabile via `recommendations.deadline_horizon_days`). Feature-check: se la tabella scadenze non esiste, sorgente saltata.
+3. **mileage** — per ogni `MaintenanceRule` attiva: cerca ultima esecuzione (FK su recommendation accettata → fuzzy case-insensitive su descrizione righe storico); se km_attuali − km_ultima ≥ every_km **oppure** mesi trascorsi ≥ every_months (o nessuna storia), genera recommendation.
+
+Trigger: apertura pannello (lazy via `mount()`) + aggiornamento `km_attuali` veicolo (VeicoloObserver).
+
+### Pannello nell'OdL
+- Badge contatore "Da valutare (N)" visibile solo se N > 0.
+- Per ogni suggestion: badge sorgente colorato, titolo, data/km scadenza, OdL di origine.
+- **Aggiungi** → crea CommessaRiga(manodopera, outcome=completed) + segna accepted.
+- **Ignora** → modale con motivo opzionale + segna dismissed.
+
+### Regole manutenzione
+CRUD in `Impostazioni → Manutenzioni ricorrenti`. Campi: nome, ogni_km, ogni_mesi (almeno uno obbligatorio), toggle attivo.  
+Seeder: tagliando olio (15.000 km / 12 mesi), filtro aria (30.000 km / 24 mesi), cinghia distribuzione (120.000 km), liquido freni (24 mesi).
+
+---
+
 ## Stato Veicolo — ricerca rapida da banco
 
 Vista pensata per rispondere al telefono in tre secondi: digita targa, cognome o numero di telefono e vedi subito dov'è la macchina, cosa manca e quando è prevista la consegna.
