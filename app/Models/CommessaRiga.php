@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use App\Enums\TipoRiga;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class CommessaRiga extends Model
 {
+    use HasFactory;
 
     protected $table = 'commessa_righe';
 

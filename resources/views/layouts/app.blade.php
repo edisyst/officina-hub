@@ -30,6 +30,14 @@
     </ul>
     <ul class="navbar-nav ml-auto">
       <li class="nav-item">
+        <a href="{{ route('stato-veicolo') }}"
+           class="nav-link {{ request()->routeIs('stato-veicolo') ? 'text-primary' : '' }}"
+           title="Stato veicolo — dove è la macchina? (F2)">
+          <i class="fas fa-phone"></i>
+          <span class="d-none d-md-inline ml-1" style="font-size:12px;opacity:.6">F2</span>
+        </a>
+      </li>
+      <li class="nav-item">
         <button
           class="nav-link btn btn-link"
           title="Ricerca globale (Ctrl+K)"
@@ -80,6 +88,13 @@
             </a>
           </li>
           @endcan
+
+          <li class="nav-item">
+            <a href="{{ route('stato-veicolo') }}" class="nav-link {{ request()->routeIs('stato-veicolo') ? 'active' : '' }}">
+              <i class="nav-icon fas fa-phone"></i>
+              <p>Stato veicolo</p>
+            </a>
+          </li>
 
           <li class="nav-item has-treeview {{ request()->routeIs('dashboard') || request()->routeIs('analytics.*') ? 'menu-open' : '' }}">
             <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') || request()->routeIs('analytics.*') ? 'active' : '' }}">
@@ -615,6 +630,16 @@
 
 @livewire('command-palette')
 @livewireScripts
+<script>
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'F2' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+    var tag = document.activeElement ? document.activeElement.tagName : '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    e.preventDefault();
+    window.location.href = '{{ route('stato-veicolo') }}';
+  }
+});
+</script>
 @RegisterServiceWorkerScript
 @stack('scripts')
 

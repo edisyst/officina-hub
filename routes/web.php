@@ -147,6 +147,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return response()->file(Storage::disk('local')->path($path), ['Content-Type' => 'application/pdf']);
     })->name('allegati.perizia');
 
+    // Stato veicolo — ricerca rapida da banco telefono
+    Route::get('/stato-veicolo', \App\Livewire\VehicleStatus\Lookup::class)
+        ->name('stato-veicolo');
+
     // Endpoint JSON per FullCalendar — usa sessione web (non API token)
     Route::middleware('throttle:api-internal')->group(function () {
         Route::get('/api/appuntamenti', [AppuntamentiController::class, 'index'])->name('api.appuntamenti');
