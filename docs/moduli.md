@@ -61,7 +61,7 @@ bozza → accettata → in_lavorazione ⇄ sospesa
 
 Ogni transizione è loggata in `commessa_log`. Accettazione e consegna richiedono **firma SVG** (signature_pad).
 
-**Route:** `GET /commesse`, `GET /commesse/{id}`, `GET /commesse/{id}/qr-code`
+**Route:** `GET /commesse`, `GET /commesse/{id}`, `GET /commesse/{id}/qr-code`, `GET /commesse/stampa-massiva`
 
 - Righe libere (manodopera, articoli, note) con typeahead su catalogo/tariffe
 - Scarico automatico magazzino al passaggio a `completata` (CommessaObserver)
@@ -69,6 +69,9 @@ Ogni transizione è loggata in `commessa_log`. Accettazione e consegna richiedon
 - Generazione PDF scheda e preventivo (dompdf)
 - Widget veicolo di cortesia nel dettaglio
 - Pulsante per avviare flusso deposito gomme dalla commessa
+- **Selezione multipla** nella lista: checkbox per riga, seleziona pagina, "seleziona tutti i N risultati del filtro" (Gmail-style)
+- **Bulk cambio stato** con modale e report per-record (successi / saltati con motivo)
+- **Stampa massiva** HTML multi-pagina e **export CSV** della selezione
 
 ---
 
@@ -106,6 +109,8 @@ Gestione catalogo articoli, fornitori, categorie e movimenti transazionali.
 - Scarico automatico al completamento commessa
 - Report con tab Rotazione (ABC), Valore per categoria, CSV export con BOM UTF-8
 - Import/export CSV compatibile Excel italiano
+- **Selezione multipla** nella lista articoli: bulk riordino (crea bozze ordini fornitore per fornitore preferenziale), bulk aggiornamento ubicazione, export CSV
+- **Inline editing** direttamente nella cella: prezzo vendita, ubicazione, scorta minima — click attiva input, Enter salva, Esc annulla; ogni salvataggio loggato con old/new su activitylog
 
 ---
 

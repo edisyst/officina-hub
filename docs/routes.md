@@ -1,5 +1,17 @@
 # Route per modulo
 
+## Step 32 — Bulk actions e inline editing tabelle
+
+Estensioni delle pagine esistenti — nessuna voce di menu nuova.
+
+```
+GET  /commesse/stampa-massiva?ids=1,2,3   → commesse.stampa-massiva   (viewAny Commessa)
+     Stampa HTML multi-pagina OdL selezionati (page-break CSS, pulsante browser print)
+```
+
+Tutte le altre azioni bulk (cambia stato, export CSV) e inline edit (prezzo vendita,
+ubicazione, scorta minima) operano via Livewire senza route dedicate.
+
 ## Step 31 — Vista rapida stato veicolo
 ```
 GET  /stato-veicolo   → stato-veicolo   (tutti i ruoli autenticati)

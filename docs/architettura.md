@@ -1,5 +1,19 @@
 # Note architetturali per modulo
 
+## Step 32 — Bulk actions e inline editing tabelle
+
+- **`WithBulkSelection` trait** (`app/Livewire/Concerns/`): `selectedIds[]`, `selectPage`, `selectAll`. Il flag `selectAll=true` rappresenta "tutti i risultati del filtro corrente" (Gmail-style) — gli ID non sono materializzati; `resolveIds()` esegue la query filtro al momento dell'azione. Reset automatico di selezione e pagina a ogni cambio filtro/ricerca.
+- **`authorizeBulk(string $action)`**: hook astratto implementato da ciascun componente. Usa `$this->authorize('create', Model::class)` (no istanza richiesta) — semanticamente equivalente a "può modificare".
+- **`#[Computed] selectionCount()`**: calcolato via `getBulkQuery()->count()` se `selectAll=true`, altrimenti `count($selectedIds)`. Passato esplicitamente al Blade (`'selectionCount' => $this->selectionCount()`).
+- **`BulkChangeWorkOrderStatusAction`**: orchestrates `AggiornaStatoAction` per-record in loop (chunk 50). Ogni OdL è indipendente — un fallimento non annulla i precedenti. Report: `['success' => [...ids], 'skipped' => [['id', 'numero', 'motivo']]]`. Motivo estratto dalla `ValidationException` di `AggiornaStatoAction`.
+- **`BulkReorderAction`**: Step 15 presente — crea `OrdineFornitore` in bozza per fornitore preferenziale via `NumerazioneService`. Articoli senza `fornitore_id` restituiti in `senza_fornitore[]`. `toCsv()` disponibile come fallback (utile per test). Tutto in `DB::transaction` per coerenza numerazione.
+- **`BulkUpdateLocationAction`**: aggiorna `ubicazione` con activitylog `old/new` per ogni articolo (chunk 50).
+- **`InlineEdit` Blade component** (`x-inline-edit`): Alpine.js `x-data` con `editing`, `val`, `orig`. Click attiva l'input (`$refs.inp.select()`); Enter chiama `$wire.salvaInlineEdit(id, field, val)`; Esc ripristina; Tab salva e naviga alla cella successiva via `data-inline-next`. Il metodo Livewire restituisce `bool` — `false` su campo non ammesso o validazione fallita, senza causare errori visibili.
+- **`salvaInlineEdit(int $id, string $field, mixed $value)`** su `ListaArticoli`: allowlist esplicita dei campi (`ubicazione`, `prezzo_vendita`, `scorta_minima`) con regole di validazione corrispondenti a quelle del form modale — single source of truth dentro il metodo. Validazione via `validator()` standalone (non `$this->validate()` perché nessuna proprietà Livewire dichiarata). Autorizzazione sull'istanza `Articolo::findOrFail($id)`.
+- **Stampa massiva** (`/commesse/stampa-massiva?ids=...`): controller thin `CommessaController::stampaMassiva()`, max 200 ID, view `print/work-orders-batch.blade.php` con CSS `page-break-after: always`.
+- **Export CSV**: `response()->streamDownload()` su entrambe le tabelle — BOM UTF-8 + separatore `;`.
+- **Chunk size 50**: per selezioni > 500 record il loop itera su chunk di 50. Sincrono (code attive presenti ma non obbligatorie per default).
+
 ## Step 31 — Vista rapida stato veicolo
 
 - **`VehicleStatusService::lookup(string $term)`**: cerca per targa (prefix), cognome/nome/ragione_sociale, telefono; max 5 risultati; eager loading batch senza N+1 (query totali ≤ 12 per 5 veicoli).
