@@ -38,12 +38,46 @@
     </div>
   </div>
 
+  <!-- Barra azioni bulk -->
+  @if(count($selectedIds) > 0 || $selectAll)
+  <div class="alert alert-info py-2 mb-3 d-flex align-items-center flex-wrap" style="gap:8px">
+    <span>
+      <strong>{{ $selectionCount }}</strong> articol{{ $selectionCount === 1 ? 'o' : 'i' }} selezionat{{ $selectionCount === 1 ? 'o' : 'i' }}.
+    </span>
+    @if(!$selectAll && $articoli->total() > count($selectedIds))
+    <button wire:click="selectAllResults" class="btn btn-sm btn-link p-0">
+      Seleziona tutti i {{ $articoli->total() }} risultati
+    </button>
+    @endif
+    <div class="ml-auto d-flex flex-wrap" style="gap:6px">
+      @can('create', \App\Models\Articolo::class)
+      <button wire:click="bulkRiordina" class="btn btn-sm btn-warning" wire:loading.attr="disabled" wire:target="bulkRiordina">
+        <span wire:loading wire:target="bulkRiordina"><i class="fas fa-spinner fa-spin"></i></span>
+        <i class="fas fa-cart-plus"></i> Riordina
+      </button>
+      <button wire:click="apriBulkUbicazioneModal" class="btn btn-sm btn-info">
+        <i class="fas fa-map-marker-alt"></i> Ubicazione
+      </button>
+      @endcan
+      <button wire:click="exportCsv" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-file-csv"></i> CSV
+      </button>
+      <button wire:click="deselectAll" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-times"></i> Deseleziona
+      </button>
+    </div>
+  </div>
+  @endif
+
   <!-- Tabella -->
   <div class="card">
     <div class="card-body p-0">
       <table class="table table-hover mb-0 table-sm">
         <thead class="thead-light">
           <tr>
+            <th style="width:36px">
+              <input type="checkbox" wire:model.live="selectPage" title="Seleziona pagina">
+            </th>
             <th>Codice</th>
             <th>Descrizione</th>
             <th>Categoria</th>
@@ -51,14 +85,18 @@
             <th>U.M.</th>
             <th class="text-right">Giacenza</th>
             <th class="text-right">Prezzo acq.</th>
-            <th class="text-right">Prezzo vend.</th>
-            <th>Ubicazione</th>
+            <th class="text-right">Prezzo vend. <i class="fas fa-pencil-alt fa-xs text-muted" title="Modificabile inline"></i></th>
+            <th>Ubicazione <i class="fas fa-pencil-alt fa-xs text-muted" title="Modificabile inline"></i></th>
+            <th>Scorta min. <i class="fas fa-pencil-alt fa-xs text-muted" title="Modificabile inline"></i></th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           @forelse($articoli as $art)
-          <tr>
+          <tr class="{{ in_array($art->id, $selectedIds) ? 'table-active' : '' }}">
+            <td>
+              <input type="checkbox" wire:model.live="selectedIds" value="{{ $art->id }}">
+            </td>
             <td>
               <a href="{{ route('magazzino.articoli.show', $art->id) }}" class="font-weight-bold">
                 {{ $art->codice }}
@@ -78,8 +116,27 @@
               </span>
             </td>
             <td class="text-right">€ {{ number_format((float)$art->prezzo_acquisto, 2, ',', '.') }}</td>
-            <td class="text-right">€ {{ number_format((float)$art->prezzo_vendita, 2, ',', '.') }}</td>
-            <td><small>{{ $art->ubicazione ?? '—' }}</small></td>
+            <td class="text-right" style="min-width:90px">
+              @can('update', $art)
+              <x-inline-edit :record-id="$art->id" field="prezzo_vendita" :value="(float)$art->prezzo_vendita" type="number" step="0.01" min="0" />
+              @else
+              € {{ number_format((float)$art->prezzo_vendita, 2, ',', '.') }}
+              @endcan
+            </td>
+            <td style="min-width:100px">
+              @can('update', $art)
+              <x-inline-edit :record-id="$art->id" field="ubicazione" :value="$art->ubicazione ?? ''" placeholder="—" />
+              @else
+              <small>{{ $art->ubicazione ?? '—' }}</small>
+              @endcan
+            </td>
+            <td style="min-width:70px">
+              @can('update', $art)
+              <x-inline-edit :record-id="$art->id" field="scorta_minima" :value="(int)$art->scorta_minima" type="number" step="1" min="0" />
+              @else
+              {{ $art->scorta_minima }}
+              @endcan
+            </td>
             <td class="text-right text-nowrap">
               @can('movimenta', $art)
               <button wire:click="apriCaricoModal({{ $art->id }})" class="btn btn-xs btn-success" title="Carico">
@@ -104,7 +161,7 @@
             </td>
           </tr>
           @empty
-          <tr><td colspan="10" class="text-center text-muted py-4">Nessun articolo trovato.</td></tr>
+          <tr><td colspan="12" class="text-center text-muted py-4">Nessun articolo trovato.</td></tr>
           @endforelse
         </tbody>
       </table>
@@ -344,6 +401,66 @@
             <span wire:loading wire:target="eseguiRettifica" class="spinner-border spinner-border-sm mr-1"></span>
             Conferma rettifica
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  @endif
+
+  <!-- Modal Bulk Ubicazione -->
+  @if($showBulkUbicazioneModal)
+  <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Aggiorna ubicazione — {{ $selectionCount }} articoli</h5>
+          <button type="button" class="close" wire:click="$set('showBulkUbicazioneModal',false)"><span>&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Nuova ubicazione *</label>
+            <input wire:model="bulkNuovaUbicazione" type="text" class="form-control @error('bulkNuovaUbicazione') is-invalid @enderror" placeholder="Es. A3-S2">
+            @error('bulkNuovaUbicazione')<div class="invalid-feedback">{{ $message }}</div>@enderror
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button wire:click="$set('showBulkUbicazioneModal',false)" class="btn btn-secondary">Annulla</button>
+          <button wire:click="eseguiBulkUbicazione" class="btn btn-info" wire:loading.attr="disabled">
+            <span wire:loading wire:target="eseguiBulkUbicazione"><i class="fas fa-spinner fa-spin"></i></span>
+            Aggiorna
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  @endif
+
+  <!-- Report Riordino -->
+  @if($showBulkReport && !empty($bulkReport))
+  <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Report riordino</h5>
+          <button type="button" class="close" wire:click="$set('showBulkReport',false)"><span>&times;</span></button>
+        </div>
+        <div class="modal-body">
+          @if(!empty($bulkReport['ordini']))
+          <p class="text-success">
+            <i class="fas fa-check-circle"></i>
+            <strong>{{ count($bulkReport['ordini']) }}</strong> ordini fornitore in bozza creati.
+          </p>
+          <p><a href="{{ route('acquisti.ordini') }}" class="btn btn-sm btn-outline-primary">Vai agli ordini</a></p>
+          @endif
+          @if(!empty($bulkReport['senza_fornitore']))
+          <p class="text-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>{{ count($bulkReport['senza_fornitore']) }}</strong> articoli senza fornitore preferenziale: non inclusi negli ordini.
+          </p>
+          @endif
+        </div>
+        <div class="modal-footer">
+          <button wire:click="$set('showBulkReport',false)" class="btn btn-primary">Chiudi</button>
         </div>
       </div>
     </div>

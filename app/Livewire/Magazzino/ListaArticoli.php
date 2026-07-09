@@ -4,18 +4,23 @@ namespace App\Livewire\Magazzino;
 
 use App\Actions\Magazzino\CaricoManualeAction;
 use App\Actions\Magazzino\RettificaInventarioAction;
+use App\Actions\Parts\BulkReorderAction;
+use App\Actions\Parts\BulkUpdateLocationAction;
 use App\Enums\TipoMovimento;
 use App\Enums\UnitaMisura;
+use App\Livewire\Concerns\WithBulkSelection;
 use App\Models\Articolo;
 use App\Models\CategoriaArticolo;
 use App\Models\Fornitore;
+use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ListaArticoli extends Component
 {
-    use WithPagination;
+    use WithPagination, WithBulkSelection;
 
     public string $search = '';
     public string $filtroCategoria = '';
@@ -100,25 +105,173 @@ class ListaArticoli extends Component
     #[Rule('required|string|min:5')]
     public string $rettificaNota = '';
 
+    // Bulk modals
+    public bool $showBulkUbicazioneModal = false;
+    public string $bulkNuovaUbicazione = '';
+    public bool $showBulkReport = false;
+    public array $bulkReport = [];
+
     public function updatedSearch(): void
     {
         $this->resetPage();
+        $this->deselectAll();
     }
 
     public function updatedFiltroCategoria(): void
     {
         $this->resetPage();
+        $this->deselectAll();
     }
 
     public function updatedFiltroFornitore(): void
     {
         $this->resetPage();
+        $this->deselectAll();
     }
 
     public function updatedSoloSottoScorta(): void
     {
         $this->resetPage();
+        $this->deselectAll();
     }
+
+    // --- WithBulkSelection ---
+
+    protected function getBulkQuery(): Builder
+    {
+        return Articolo::query()
+            ->when($this->search, fn($q) => $q->search($this->search))
+            ->when($this->filtroCategoria, fn($q) => $q->where('categoria_articolo_id', $this->filtroCategoria))
+            ->when($this->filtroFornitore, fn($q) => $q->where('fornitore_id', $this->filtroFornitore))
+            ->when($this->soloSottoScorta, fn($q) => $q->sottoScorta());
+    }
+
+    protected function getPageIds(): array
+    {
+        return $this->getBulkQuery()
+            ->orderBy('descrizione')
+            ->paginate(25)
+            ->pluck('id')
+            ->toArray();
+    }
+
+    protected function authorizeBulk(string $action): void
+    {
+        $this->authorize('create', Articolo::class);
+    }
+
+    // --- Bulk actions ---
+
+    public function bulkRiordina(): void
+    {
+        $this->authorizeBulk('update');
+        $ids = $this->resolveIds();
+
+        if (empty($ids)) {
+            session()->flash('error', 'Nessun articolo selezionato.');
+            return;
+        }
+
+        $result = app(BulkReorderAction::class)->execute($ids, auth()->user());
+
+        $this->bulkReport     = $result;
+        $this->showBulkReport = true;
+        $this->deselectAll();
+    }
+
+    public function apriBulkUbicazioneModal(): void
+    {
+        $this->authorizeBulk('update');
+        $this->bulkNuovaUbicazione = '';
+        $this->showBulkUbicazioneModal = true;
+    }
+
+    public function eseguiBulkUbicazione(): void
+    {
+        $this->authorizeBulk('update');
+        $this->validate(['bulkNuovaUbicazione' => 'required|string|max:100'], [], ['bulkNuovaUbicazione' => 'ubicazione']);
+
+        $ids        = $this->resolveIds();
+        $aggiornati = app(BulkUpdateLocationAction::class)->execute($ids, $this->bulkNuovaUbicazione, auth()->user());
+
+        session()->flash('success', "{$aggiornati} articoli aggiornati.");
+        $this->showBulkUbicazioneModal = false;
+        $this->deselectAll();
+    }
+
+    public function exportCsv(): StreamedResponse
+    {
+        $ids = $this->resolveIds();
+
+        $articoli = Articolo::with(['categoria', 'fornitore'])
+            ->when(!empty($ids), fn($q) => $q->whereIn('id', $ids))
+            ->orderBy('descrizione')
+            ->get();
+
+        return response()->streamDownload(function () use ($articoli) {
+            $handle = fopen('php://output', 'w');
+            fwrite($handle, "\xEF\xBB\xBF");
+            fputcsv($handle, ['Codice', 'Descrizione', 'Categoria', 'Fornitore', 'U.M.', 'Giacenza', 'Scorta Min.', 'Prezzo Acq.', 'Prezzo Vend.', 'Ubicazione'], ';');
+
+            foreach ($articoli as $art) {
+                fputcsv($handle, [
+                    $art->codice,
+                    $art->descrizione,
+                    $art->categoria?->nome ?? '',
+                    $art->fornitore?->ragione_sociale ?? '',
+                    $art->unita_misura->label(),
+                    $art->giacenza_attuale,
+                    $art->scorta_minima,
+                    number_format((float) $art->prezzo_acquisto, 2, ',', '.'),
+                    number_format((float) $art->prezzo_vendita, 2, ',', '.'),
+                    $art->ubicazione ?? '',
+                ], ';');
+            }
+
+            fclose($handle);
+        }, 'articoli-' . now()->format('Ymd') . '.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    // --- Inline edit ---
+
+    /**
+     * Saves an inline-edited field on an Articolo.
+     * Returns true on success (Alpine uses this to update orig), false on failure.
+     */
+    public function salvaInlineEdit(int $id, string $field, mixed $value): bool
+    {
+        $art = Articolo::findOrFail($id);
+        $this->authorize('update', $art);
+
+        $allowed = [
+            'ubicazione'    => 'nullable|string|max:100',
+            'prezzo_vendita' => 'required|numeric|min:0',
+            'scorta_minima' => 'required|integer|min:0',
+        ];
+
+        if (! array_key_exists($field, $allowed)) {
+            return false;
+        }
+
+        try {
+            $validated = validator([$field => $value], [$field => $allowed[$field]])->validate();
+        } catch (\Illuminate\Validation\ValidationException) {
+            return false;
+        }
+
+        $old = $art->$field;
+        $art->update($validated);
+
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($art)
+            ->withProperties(['old' => [$field => $old], 'new' => [$field => $validated[$field]]])
+            ->log('modifica_inline');
+
+        return true;
+    }
+
+    // --- Existing methods unchanged ---
 
     public function apriArticoloModal(?int $id = null): void
     {
@@ -294,23 +447,22 @@ class ListaArticoli extends Component
 
     public function render()
     {
-        $articoli = Articolo::with(['categoria', 'fornitore'])
-            ->when($this->search, fn($q) => $q->search($this->search))
-            ->when($this->filtroCategoria, fn($q) => $q->where('categoria_articolo_id', $this->filtroCategoria))
-            ->when($this->filtroFornitore, fn($q) => $q->where('fornitore_id', $this->filtroFornitore))
-            ->when($this->soloSottoScorta, fn($q) => $q->sottoScorta())
+        $articoli = $this->getBulkQuery()
+            ->with(['categoria', 'fornitore'])
             ->orderBy('descrizione')
             ->paginate(25);
 
-        $categorie = CategoriaArticolo::orderBy('nome')->get();
-        $fornitori  = Fornitore::orderBy('ragione_sociale')->get();
+        $categorie   = CategoriaArticolo::orderBy('nome')->get();
+        $fornitori   = Fornitore::orderBy('ragione_sociale')->get();
         $unitaMisura = UnitaMisura::cases();
-        $tipiCarico = [
+        $tipiCarico  = [
             TipoMovimento::Carico,
             TipoMovimento::ResoFornitore,
             TipoMovimento::ResoCliente,
         ];
 
-        return view('livewire.magazzino.lista-articoli', compact('articoli', 'categorie', 'fornitori', 'unitaMisura', 'tipiCarico'));
+        return view('livewire.magazzino.lista-articoli', compact(
+            'articoli', 'categorie', 'fornitori', 'unitaMisura', 'tipiCarico'
+        ) + ['selectionCount' => $this->selectionCount()]);
     }
 }

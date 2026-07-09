@@ -91,6 +91,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:viewAny,App\Models\Commessa')
         ->name('commesse.show');
 
+    // Stampa massiva commesse
+    Route::get('/commesse/stampa-massiva', [CommessaController::class, 'stampaMassiva'])
+        ->middleware('can:viewAny,App\Models\Commessa')
+        ->name('commesse.stampa-massiva');
+
     // PDF download (controller thin)
     Route::get('/commesse/{commessa}/pdf/scheda', [PdfController::class, 'scheda'])->name('pdf.scheda');
     Route::get('/commesse/{commessa}/pdf/preventivo', [PdfController::class, 'preventivo'])->name('pdf.preventivo');

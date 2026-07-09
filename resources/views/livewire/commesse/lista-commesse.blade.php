@@ -49,6 +49,36 @@
     </div>
   </div>
 
+  <!-- Barra azioni bulk (visibile solo con selezione attiva) -->
+  @if($vista === 'tabella' && (count($selectedIds) > 0 || $selectAll))
+  <div class="alert alert-info py-2 mb-3 d-flex align-items-center" style="gap:8px">
+    <span>
+      <strong>{{ $selectionCount }}</strong> commess{{ $selectionCount === 1 ? 'a' : 'e' }} selezionat{{ $selectionCount === 1 ? 'a' : 'e' }}.
+    </span>
+    @if(!$selectAll && $commesse instanceof \Illuminate\Pagination\LengthAwarePaginator && $commesse->total() > count($selectedIds))
+    <button wire:click="selectAllResults" class="btn btn-sm btn-link p-0">
+      Seleziona tutti i {{ $commesse->total() }} risultati
+    </button>
+    @endif
+    <div class="ml-auto d-flex" style="gap:6px">
+      @can('create', \App\Models\Commessa::class)
+      <button wire:click="apriBulkStatoModal" class="btn btn-sm btn-warning">
+        <i class="fas fa-exchange-alt"></i> Cambia stato
+      </button>
+      <button wire:click="stampaMassiva" class="btn btn-sm btn-secondary">
+        <i class="fas fa-print"></i> Stampa
+      </button>
+      @endcan
+      <button wire:click="exportCsv" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-file-csv"></i> CSV
+      </button>
+      <button wire:click="deselectAll" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-times"></i> Deseleziona
+      </button>
+    </div>
+  </div>
+  @endif
+
   <!-- Vista Tabella -->
   @if($vista === 'tabella')
   <div class="card">
@@ -56,13 +86,19 @@
       <table class="table table-hover table-sm mb-0">
         <thead class="thead-light">
           <tr>
+            <th style="width:36px">
+              <input type="checkbox" wire:model.live="selectPage" title="Seleziona pagina">
+            </th>
             <th>Numero</th><th>Cliente</th><th>Veicolo</th><th>Tipo</th>
             <th>Stato</th><th>Ingresso</th><th>Uscita Prevista</th>
           </tr>
         </thead>
         <tbody>
           @forelse($commesse as $c)
-          <tr>
+          <tr class="{{ in_array($c->id, $selectedIds) ? 'table-active' : '' }}">
+            <td>
+              <input type="checkbox" wire:model.live="selectedIds" value="{{ $c->id }}">
+            </td>
             <td><a href="{{ route('commesse.show', $c->id) }}" class="font-weight-bold">{{ $c->numero }}</a></td>
             <td>{{ $c->cliente->nome_completo }}</td>
             <td>
@@ -85,7 +121,7 @@
             </td>
           </tr>
           @empty
-          <tr><td colspan="7" class="text-center text-muted py-3">Nessuna commessa trovata.</td></tr>
+          <tr><td colspan="8" class="text-center text-muted py-3">Nessuna commessa trovata.</td></tr>
           @endforelse
         </tbody>
       </table>
@@ -121,6 +157,72 @@
       </div>
     </div>
     @endforeach
+  </div>
+  @endif
+
+  <!-- Modal cambio stato massivo -->
+  @if($showBulkStatoModal)
+  <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Cambia stato — {{ $selectionCount }} commesse</h5>
+          <button type="button" class="close" wire:click="$set('showBulkStatoModal',false)"><span>&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Stato target *</label>
+            <select wire:model="bulkStatoTarget" class="form-control @error('bulkStatoTarget') is-invalid @enderror">
+              <option value="">— Seleziona —</option>
+              @foreach(\App\Enums\StatoCommessa::cases() as $s)
+              <option value="{{ $s->value }}">{{ $s->label() }}</option>
+              @endforeach
+            </select>
+            @error('bulkStatoTarget')<div class="invalid-feedback">{{ $message }}</div>@enderror
+          </div>
+          <div class="form-group">
+            <label>Nota (opzionale)</label>
+            <input wire:model="bulkNota" type="text" class="form-control" placeholder="Es: accettazione massiva mattino">
+          </div>
+          <p class="text-warning small mb-0"><i class="fas fa-info-circle"></i> Le commesse che non possono fare la transizione verranno saltate e riportate nel report.</p>
+        </div>
+        <div class="modal-footer">
+          <button wire:click="$set('showBulkStatoModal',false)" class="btn btn-secondary">Annulla</button>
+          <button wire:click="eseguiBulkCambioStato" class="btn btn-warning" wire:loading.attr="disabled">
+            <span wire:loading wire:target="eseguiBulkCambioStato"><i class="fas fa-spinner fa-spin"></i></span>
+            Esegui
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  @endif
+
+  <!-- Report bulk -->
+  @if($showBulkReport && !empty($bulkReport))
+  <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Report cambio stato</h5>
+          <button type="button" class="close" wire:click="$set('showBulkReport',false)"><span>&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-success"><i class="fas fa-check-circle"></i> <strong>{{ count($bulkReport['success'] ?? []) }}</strong> commesse aggiornate con successo.</p>
+          @if(!empty($bulkReport['skipped']))
+          <p class="text-warning"><i class="fas fa-exclamation-triangle"></i> <strong>{{ count($bulkReport['skipped']) }}</strong> saltate:</p>
+          <ul class="small">
+            @foreach($bulkReport['skipped'] as $skip)
+            <li><strong>{{ $skip['numero'] }}</strong>: {{ $skip['motivo'] }}</li>
+            @endforeach
+          </ul>
+          @endif
+        </div>
+        <div class="modal-footer">
+          <button wire:click="$set('showBulkReport',false)" class="btn btn-primary">Chiudi</button>
+        </div>
+      </div>
+    </div>
   </div>
   @endif
 </div>
