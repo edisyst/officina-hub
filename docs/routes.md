@@ -1,5 +1,11 @@
 # Route per modulo
 
+## Step 31 — Vista rapida stato veicolo
+```
+GET  /stato-veicolo   → stato-veicolo   (tutti i ruoli autenticati)
+```
+Shortcut globale F2; pulsante navbar `fa-phone`.
+
 ## Step 29 — Matrici prezzi manodopera e ricambi
 ```
 GET  /impostazioni/listini   → impostazioni.listini   (admin)

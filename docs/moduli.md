@@ -4,6 +4,24 @@ Panoramica di tutte le aree applicative, con route principali e note operative.
 
 ---
 
+## Stato Veicolo — ricerca rapida da banco
+
+Vista pensata per rispondere al telefono in tre secondi: digita targa, cognome o numero di telefono e vedi subito dov'è la macchina, cosa manca e quando è prevista la consegna.
+
+**Route:** `GET /stato-veicolo` — shortcut globale **F2**, pulsante **`fa-phone`** in navbar e voce sidebar.
+
+- Ricerca live (`debounce 200ms`, min 2 caratteri) su targa (prefix), cognome/nome/ragione_sociale, telefono. Max 5 risultati.
+- Card grande per ogni veicolo: targa in font monospace, marca+modello, nome e telefono cliente.
+- Stato OdL come badge colorato (coerente con board Step 25) + data consegna prevista (Step 28).
+- **Semaforo ricambi**: 🟢 verde (tutti disponibili o già scaricati), 🟡 giallo (mancanti con elenco e stato ordine fornitore se Step 15 attivo), ⚫ grigio (nessun ricambio in OdL).
+- Approvazione DVI (Step 10) e ultima comunicazione con estratto (Step 30): presenti solo se i moduli sono installati.
+- Se nessun OdL attivo: mostra data ultima consegna storica.
+- Auto-espansione card se match esatto per targa.
+- Azioni: "Apri OdL" e "Annota chiamata" (se Step 30 presente).
+- **Zero dati economici**: la scheda è pensata per essere visibile al banco.
+
+---
+
 ## Accettazione veicolo (one-screen)
 
 Punto d'ingresso quotidiano per l'accettatore: digita la targa e apre l'OdL senza mai cambiare pagina.

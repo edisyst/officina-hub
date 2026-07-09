@@ -1,5 +1,19 @@
 # Note architetturali per modulo
 
+## Step 31 — Vista rapida stato veicolo
+
+- **`VehicleStatusService::lookup(string $term)`**: cerca per targa (prefix), cognome/nome/ragione_sociale, telefono; max 5 risultati; eager loading batch senza N+1 (query totali ≤ 12 per 5 veicoli).
+- **`VehicleStatusCard` DTO** (readonly): targa, veicolo, cliente, OdL attivo/storico, semaforo ricambi, approvazione DVI, ultima comunicazione. Zero dati economici.
+- **Semaforo ricambi**: grigio (nessun articolo), verde (giacenza ok o `MovimentoMagazzino::Scarico` già registrato per quella commessa), giallo (giacenza < fabbisogno, non scaricato). Calcolo su `commessa_righe` tipo `Articolo` con `articolo_id` non null.
+- **Feature check via `Schema::hasTable()`** in costruttore del service:
+  - Step 10 (`dvi_ispezioni`): stato approvazione dell'ultima `DviIspezione` per OdL.
+  - Step 15 (`ordine_fornitore_righe`): per ogni ricambio giallo, cerca `OrdineFornitoreRiga` su ordine in stato pendente e ne espone stato + `data_consegna_prevista`.
+  - Step 28 (`commesse.data_ora_consegna_prevista`): già presente — migrazione guard no-op se colonna esiste.
+  - Step 30 (`communications`): ultima `Communication` per OdL (canale, data, estratto 80 char).
+- **Migrazione guard** `ensure_expected_delivery_on_commesse`: `up()` crea `data_ora_consegna_prevista` solo se assente; `down()` è no-op documentato (impossibile ricostruire chi l'ha creata).
+- **Livewire `VehicleStatus\Lookup`**: `wire:model.live.debounce.200ms`, min 2 char, computed `results` lazy. Auto-expand card se un unico match con targa esatta (`strtoupper` comparato).
+- **Accesso rapido**: pulsante navbar `fa-phone` + voce sidebar "Stato veicolo" + shortcut globale F2 (JS vanilla in `app.blade.php`, non attivo se focus su input/textarea/select).
+
 ## Step 29 — Matrici prezzi ricambi e tariffe orarie manodopera
 
 - **Tabelle:** `matrici_prezzo`, `matrici_prezzo_scaglioni`, `tariffe_orarie`. `commessa_righe` ha `tariffa_oraria_id` FK nullable come riferimento (snapshot del valore resta in `prezzo_unitario`).
