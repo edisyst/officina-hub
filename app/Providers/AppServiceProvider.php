@@ -28,6 +28,7 @@ use App\Observers\DocumentoObserver;
 use App\Observers\FatturaAcquistoObserver;
 use App\Observers\PagamentoObserver;
 use App\Observers\PagamentoFornitoreObserver;
+use App\Observers\VeicoloObserver;
 use App\Policies\AllegatoPolicy;
 use App\Policies\AppuntamentoPolicy;
 use App\Policies\ArticoloPolicy;
@@ -104,6 +105,7 @@ class AppServiceProvider extends ServiceProvider
         Pagamento::observe(PagamentoObserver::class);
         PagamentoFornitore::observe(PagamentoFornitoreObserver::class);
         FatturaAcquisto::observe(FatturaAcquistoObserver::class);
+        Veicolo::observe(VeicoloObserver::class);
 
         // Applica configurazione SMTP da DB (solo se non in console/test per evitare query)
         if (! $this->app->runningInConsole() && ! $this->app->environment('testing')) {

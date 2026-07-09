@@ -18,7 +18,7 @@
   <div wire:sortable="aggiornaOrdinamento">
     @forelse($righe as $riga)
     <div wire:sortable.item="{{ $riga->id }}" wire:key="riga-{{ $riga->id }}"
-      class="card card-body py-2 px-3 mb-2 shadow-sm">
+      class="card card-body py-2 px-3 mb-2 shadow-sm {{ $riga->outcome === 'declined' ? 'border-danger opacity-75' : '' }}">
       <div class="row align-items-center">
         @can('update', $commessa)
         <div class="col-auto" wire:sortable.handle style="cursor:grab">
@@ -29,6 +29,9 @@
           <span class="badge badge-{{ $riga->tipo->value === 'manodopera' ? 'primary' : ($riga->tipo->value === 'nota' ? 'light text-dark' : 'secondary') }}">
             {{ $riga->tipo->label() }}
           </span>
+          @if($riga->outcome === 'declined')
+          <br><span class="badge badge-danger" style="font-size:.65em">declinato</span>
+          @endif
           @if($riga->pacchetto_servizio_id)
           <br><small class="text-muted" title="Da pacchetto"><i class="fas fa-box-open"></i></small>
           @endif
@@ -64,6 +67,13 @@
         @endif
         @can('update', $commessa)
         <div class="col-auto ml-auto">
+          @if($riga->tipo->value === 'manodopera')
+          <button wire:click="toggleOutcome({{ $riga->id }})"
+            class="btn btn-xs {{ $riga->outcome === 'declined' ? 'btn-warning' : 'btn-outline-warning' }} mr-1"
+            title="{{ $riga->outcome === 'declined' ? 'Ripristina' : 'Segna come declinato' }}">
+            <i class="fas fa-ban"></i>
+          </button>
+          @endif
           <button wire:click="apriModal({{ $riga->id }})" class="btn btn-xs btn-info">
             <i class="fas fa-edit"></i>
           </button>

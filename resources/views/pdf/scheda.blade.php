@@ -120,7 +120,7 @@
       </tr>
     </thead>
     <tbody>
-      @foreach($commessa->righe as $riga)
+      @foreach($commessa->righe->where('outcome', '!=', 'declined') as $riga)
       <tr>
         <td>{{ $riga->tipo->label() }}</td>
         <td>{{ $riga->descrizione }}</td>
@@ -134,8 +134,9 @@
     </tbody>
     <tfoot>
       @php
-        $imponibile = $commessa->righe->sum(fn($r) => $r->imponibile);
-        $iva = $commessa->righe->sum(fn($r) => $r->iva);
+        $righeStampa = $commessa->righe->where('outcome', '!=', 'declined');
+        $imponibile = $righeStampa->sum(fn($r) => $r->imponibile);
+        $iva = $righeStampa->sum(fn($r) => $r->iva);
       @endphp
       <tr><td colspan="6" class="text-right" style="border:none;padding-top:5px">Imponibile:</td><td class="text-right" style="border:1px solid #ccc">€ {{ number_format($imponibile, 2, ',', '.') }}</td></tr>
       <tr><td colspan="6" class="text-right" style="border:none">IVA:</td><td class="text-right" style="border:1px solid #ccc">€ {{ number_format($iva, 2, ',', '.') }}</td></tr>

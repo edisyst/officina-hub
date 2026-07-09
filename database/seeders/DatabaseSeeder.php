@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             CaseMadriSeeder::class,
             PricingSeeder::class,
             CommunicationSeeder::class,
+            RecommendationSeeder::class,
         ]);
     }
 }

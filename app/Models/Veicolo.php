@@ -65,6 +65,11 @@ class Veicolo extends Model
         return $this->hasMany(Garanzia::class)->orderByDesc('data_inizio');
     }
 
+    public function recommendations()
+    {
+        return $this->hasMany(VehicleRecommendation::class, 'vehicle_id');
+    }
+
     /** Descrizione completa del veicolo */
     public function getDescrizioneAttribute(): string
     {

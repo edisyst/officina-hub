@@ -260,6 +260,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/impostazioni/tariffe', fn() => view('impostazioni.tariffe'))->name('impostazioni.tariffe');
         Route::get('/impostazioni/pacchetti', fn() => view('impostazioni.pacchetti'))->name('impostazioni.pacchetti');
         Route::get('/impostazioni/listini', fn() => view('impostazioni.listini'))->name('impostazioni.listini');
+        Route::get('/impostazioni/manutenzioni', fn() => view('impostazioni.manutenzioni'))->name('impostazioni.manutenzioni');
         Route::get('/analytics/pacchetti', fn() => view('analytics.pacchetti'))->name('analytics.pacchetti');
 
         // Test connessione lookup targa

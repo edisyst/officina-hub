@@ -390,6 +390,16 @@ class GestioneRighe extends Component
         session()->flash('success', 'Pacchetto "' . $pacchetto->nome . '" applicato (' . count($this->righePreview) . ' righe create).');
     }
 
+    public function toggleOutcome(int $id): void
+    {
+        $riga = CommessaRiga::findOrFail($id);
+        $this->authorize('update', $this->commessa);
+
+        $nuovoOutcome = $riga->outcome === 'declined' ? 'completed' : 'declined';
+        $riga->update(['outcome' => $nuovoOutcome]);
+        $this->commessa->load('righe');
+    }
+
     public function updatedInGaranzia(): void
     {
         if (! $this->inGaranzia) {

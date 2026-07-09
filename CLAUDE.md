@@ -1,3 +1,4 @@
+cc
 # Officina Hub — CLAUDE.md
 
 Gestionale web on-premise officine meccaniche (auto, moto, carrozzerie).

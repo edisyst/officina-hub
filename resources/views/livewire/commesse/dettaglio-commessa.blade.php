@@ -228,6 +228,11 @@
   </div>
   @endif
 
+  <!-- Pannello suggerimenti contestuali -->
+  @if($commessa->veicolo_id)
+  <livewire:recommendations.panel :commessa-id="$commessa->id" :key="'rec-'.$commessa->id" />
+  @endif
+
   <!-- Tab Section -->
   <ul class="nav nav-tabs" id="commessaTabs">
     <li class="nav-item">

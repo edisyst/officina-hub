@@ -563,6 +563,12 @@
                   <p>Listini e tariffe</p>
                 </a>
               </li>
+              <li class="nav-item">
+                <a href="{{ route('impostazioni.manutenzioni') }}" class="nav-link {{ request()->routeIs('impostazioni.manutenzioni') ? 'active' : '' }}">
+                  <i class="fas fa-history nav-icon"></i>
+                  <p>Manutenzioni ricorrenti</p>
+                </a>
+              </li>
             </ul>
           </li>
           @endrole

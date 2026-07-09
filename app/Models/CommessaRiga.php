@@ -30,6 +30,7 @@ class CommessaRiga extends Model
         'in_garanzia',
         'garanzia_id',
         'casa_madre_id',
+        'outcome',
     ];
 
     protected function casts(): array
@@ -44,6 +45,11 @@ class CommessaRiga extends Model
             'iva_percentuale'    => 'decimal:2',
             'in_garanzia'        => 'boolean',
         ];
+    }
+
+    public function scopeCompleted($query)
+    {
+        return $query->where('outcome', 'completed');
     }
 
     public function commessa()

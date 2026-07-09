@@ -22,7 +22,7 @@ class MarginalitaService
         $ricavoManodopera = 0.0;
         $ricavoArticoli   = 0.0;
 
-        foreach ($commessa->righe as $riga) {
+        foreach ($commessa->righe->where('outcome', '!=', 'declined') as $riga) {
             $imponibile = (float) $riga->quantita * (float) $riga->prezzo_unitario
                 * (1 - (float) $riga->sconto_percentuale / 100);
 
@@ -46,7 +46,7 @@ class MarginalitaService
         }
 
         $costoArticoli = 0.0;
-        foreach ($commessa->righe as $riga) {
+        foreach ($commessa->righe->where('outcome', '!=', 'declined') as $riga) {
             if ($riga->tipo !== TipoRiga::Manodopera) {
                 $costoArticoli += (float) $riga->prezzo_acquisto * (float) $riga->quantita;
             }
@@ -86,6 +86,7 @@ class MarginalitaService
             ->whereIn('commesse.stato', $stati)
             ->whereBetween('commesse.data_consegna', [$da, $a])
             ->whereNull('commesse.deleted_at')
+            ->where('commessa_righe.outcome', '!=', 'declined')
             ->select(
                 'commesse.tipo',
                 'commessa_righe.tipo as tipo_riga',

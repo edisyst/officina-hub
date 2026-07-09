@@ -149,19 +149,19 @@ class Commessa extends Model
         return $this->stato->puoTransire($nuovoStato);
     }
 
-    /** Calcola il totale imponibile delle righe */
+    /** Calcola il totale imponibile delle righe (escluse declined) */
     public function getTotaleImponibileAttribute(): float
     {
-        return $this->righe->sum(function ($riga) {
+        return $this->righe->where('outcome', '!=', 'declined')->sum(function ($riga) {
             $importo = $riga->quantita * $riga->prezzo_unitario;
             return $importo * (1 - $riga->sconto_percentuale / 100);
         });
     }
 
-    /** Calcola il totale IVA */
+    /** Calcola il totale IVA (escluse declined) */
     public function getTotaleIvaAttribute(): float
     {
-        return $this->righe->sum(function ($riga) {
+        return $this->righe->where('outcome', '!=', 'declined')->sum(function ($riga) {
             $importo = $riga->quantita * $riga->prezzo_unitario;
             $imponibile = $importo * (1 - $riga->sconto_percentuale / 100);
             return $imponibile * ($riga->iva_percentuale / 100);
@@ -173,16 +173,16 @@ class Commessa extends Model
         return $this->totale_imponibile + $this->totale_iva;
     }
 
-    /** Totale commessa a carico cliente (righe in garanzia valgono 0) */
+    /** Totale commessa a carico cliente (righe in garanzia o declined valgono 0) */
     public function getTotaleClienteAttribute(): float
     {
-        return $this->righe->sum(fn($r) => $r->totale_cliente);
+        return $this->righe->where('outcome', '!=', 'declined')->sum(fn($r) => $r->totale_cliente);
     }
 
-    /** Totale commessa a carico case madri (solo righe in garanzia) */
+    /** Totale commessa a carico case madri (solo righe in garanzia, escluse declined) */
     public function getTotaleCasaMadreAttribute(): float
     {
-        return $this->righe->sum(fn($r) => $r->totale_casa_madre);
+        return $this->righe->where('outcome', '!=', 'declined')->sum(fn($r) => $r->totale_casa_madre);
     }
 
     public function scopeSearch($query, string $term)
