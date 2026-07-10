@@ -1,5 +1,22 @@
 # Note architetturali per modulo
 
+## Step 34 — Undo operativo e activity feed
+
+- **`UndoHandler` interface** (`app/Contracts/`): `supports(Activity): bool`, `undo(Activity, User): Activity`. Handler registrati in `config/undo.php` array — estendibile senza toccare il core.
+- **`UndoService::canUndo()`**: gate a 4 condizioni: `properties.undoable === true`, `properties.undone_at` assente, `created_at >= now() - UNDO_WINDOW_MINUTES`, autore oppure ruolo admin.
+- **`UndoService::undo()`**: `DB::transaction` + `lockForUpdate()` sull'activity — ricontrolla `undone_at` dentro la transaction (anti doppio-undo concorrente). Su successo stampa `undone_at`, `undone_by`, `compensazione_id` nelle properties.
+- **`StockMovementUndoHandler`**: soggetto `MovimentoMagazzino@created`. Storno via `CaricoManualeAction` con tipo opposto (carico → scarico, scarico → carico) e note `"Storno movimento #N"`. Compensazione non marcata undoable.
+- **`WorkOrderStatusUndoHandler`**: soggetto `Commessa@updated` con `properties.old.stato`. Ripristina via `AggiornaStatoAction` solo se `commessa->puoTransireA($statoPrecedente)` è true — in pratica solo Sospesa ↔ InLavorazione.
+- **`WorkOrderPartUndoHandler`**: soggetto `CommessaRiga` con `log_name='commessa_riga'@created`. Elimina riga via `delete()` (CommessaRigaObserver gestisce ha_righe_garanzia). Activity di compensazione su `Commessa` con event `compensazione`.
+- **Marcatura undoable**: `AggiornaStatoAction` e `CaricoManualeAction` aggiornano l'activity auto-creata da LogsActivity post-fatto (`Activity::latest('id')->first()`). Compensazioni e undo automatici escludono la marcatura.
+- **`EmitsActionCompleted` trait** (Livewire components): `markLastActivityUndoable(Model)` trova e marca, `emitActionCompleted(msg, id)` fa `$this->dispatch('action-completed', ...)`.
+- **`UndoToast`**: layout component, ascolta `#[On('action-completed')]`. Toast Alpine countdown (secondi rimanenti), pulsante Annulla chiama `UndoService::undo()`. Dismiss manuale o auto alla scadenza.
+- **`ActivityFeedService::humanize()`**: mapping (subject_type + event + log_name) → frase italiana. Eager load causer+subject già nel query del Feed. Fallback `"{autore} ha eseguito {event} su {tipo}"`.
+- **`Activity\Feed`**: paginata 25 voci, filtri `causer_id`, `subject_type`, `created_at` range. `canUndo()` chiamato per-riga per mostrare pulsante Annulla.
+- **`Activity\FeedWidget`**: ultime 10 attività, nella dashboard solo per admin|accettatore.
+- **Env**: `UNDO_WINDOW_MINUTES=10` (default in `config/undo.php`).
+- **Spatie activity properties schema**: `undoable: true | false`, `undone_at: ISO8601?`, `undone_by: user_id?`, `compensazione_id: activity_id?`. Convenzione solo a livello applicativo, nessuna colonna aggiuntiva.
+
 ## Step 33 — Suggerimenti contestuali da storico veicolo
 
 - **`outcome` su `commessa_righe`** enum('completed','declined') default 'completed'. Righe `declined` escluse da: totali commessa (`getTotaleImponibileAttribute` ecc.), PDF scheda/preventivo (filter collection `where('outcome','!=','declined')`), `MarginalitaService::calcola()` (loop collezione), `MarginalitaService` query DB aggregata (WHERE clause). Scope `CommessaRiga::completed()` per query dirette.
