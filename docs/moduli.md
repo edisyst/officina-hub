@@ -352,3 +352,30 @@ Installabile su tablet/smartphone come Progressive Web App.
 - Manifest configurato in `config/pwa.php`
 - Pagina offline: `public/offline.html` (pre-cacheata all'install)
 - Richiede HTTPS (o localhost per sviluppo Chrome/Chromium)
+
+---
+
+## Workspace — Preferiti, Recenti, Filtri salvati (Step 35)
+
+Feature per-utente, nessun dato condiviso tra account.
+
+### Recenti
+- Tabella `user_recent_items` (morph polymorphic su Commessa, Cliente, Veicolo, Articolo).
+- Trait `TracksRecentView` → `trackRecentView(Model)` in `mount()` dei dettagli.
+- Dropdown navbar `fa-history`: ultimi 10. Widget dashboard "Riprendi da dove eri": ultimi 6 + scorciatoie.
+
+### Preferiti (Shortcuts)
+- Tabella `user_shortcuts`; unique `(user_id, url)` su path relativo.
+- Stella in navbar → `WorkspaceBar` Livewire: popover Alpine per label, toggle aggiunge/rimuove.
+- Gestione: **Route** `GET /workspace/shortcuts` (`workspace.shortcuts`) — drag SortableJS + pulsanti su/giù, rinomina, elimina.
+- Voce "Le mie scorciatoie" nel dropdown profilo utente (non nel menu sidebar).
+
+### Filtri salvati
+- Tabella `user_saved_filters`; unique `(user_id, page_key, name)`.
+- Trait `WithSavedFilters` su `ListaCommesse` (`page_key=work-orders.index`), `ListaClienti` (`clienti.index`), `ListaArticoli` (`magazzino.articoli`).
+- Barra UI `_saved-filters-bar.blade.php`: dropdown "Applica / imposta default / elimina" + "Salva filtri correnti".
+- Default si applica in `mount()` solo se nessun filtro già attivo (query string ha precedenza).
+
+### Palette (Step 24) — integrazione
+- `GlobalSearchService::suggestions(User)`: restituisce recenti + scorciatoie.
+- `CommandPalette::openPalette()` e `updatedQuery()` chiamano `suggestions()` a query vuota.

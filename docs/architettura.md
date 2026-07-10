@@ -244,3 +244,15 @@
 - `GeneraFatturaGaranziaAction::execute()`: in transaction crea 1 fattura cliente + 1 per ogni `casa_madre_id` unico; `documento_correlato_id` collega i documenti.
 - `TipoEmissione::CasaMadre` ('casa_madre'): template FatturaPA usa dati `CasaMadre` in `CessionarioCommittente`.
 - Page views usano `<x-app-layout>` (non `@extends`) perché `layouts/app.blade.php` usa `{{ $slot }}`.
+
+## Step 35 — Workspace (preferiti, recenti, filtri salvati)
+
+- `RecentItemsService::track()`: upsert manuale (select → increment/create) in transaction + prune on-write; `DB::raw` evitato per compatibilità SQLite in test.
+- Pruning: mantiene ultimi `config('workspace.recent_limit', 20)` per `user_id`, ordinati per `last_visited_at` DESC.
+- `RecordablePresenter`: mapping centralizzato morph → label/url/icon/tipo; riusato da `RecentItemsService::recent()` e `GlobalSearchService::suggestions()`.
+- `WithSavedFilters` trait: `filterWhitelist` esplicita per componente; `applyFilters()` itera solo la whitelist — chiavi non in lista ignorate anche se presenti nel JSON.
+- Default unico per `(user_id, page_key)`: enforced in `SavedFilterService::setDefault()` via transaction (reset tutti → set uno).
+- `initSavedFilters()` chiamato da `mount()` del componente dopo il proprio stato: carica lista + applica default solo se nessun filtro attivo (URL query params hanno precedenza).
+- `WorkspaceBar` Livewire globale nel layout: riceve `url` e `title` da `request()->url()`; confronta path (no query string) con `user_shortcuts.url`.
+- `GlobalSearchService::suggestions()`: retorna recenti + scorciatoie a query vuota; `CommandPalette::openPalette()` e `updatedQuery()` la chiamano quando `$query === ''`.
+- SortableJS già caricato in `app.blade.php` (Step 25+); `Shortcuts` lo usa via Alpine `x-init`.
