@@ -191,3 +191,9 @@ GET  /crm/campagne   → crm.campagne   (admin)
 GET  /garanzie/report          → garanzie.report          (admin, cassa)
 GET  /impostazioni/case-madri  → impostazioni.case-madri  (admin)
 ```
+
+
+## Step 35 — Workspace (preferiti, recenti, filtri salvati)
+```
+GET  /workspace/shortcuts  → workspace.shortcuts  (auth)
+```
