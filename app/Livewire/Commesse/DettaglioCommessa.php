@@ -14,11 +14,13 @@ use App\Models\Documento;
 use App\DataTransferObjects\CommessaMargins;
 use App\Services\Commesse\MarginCalculatorService;
 use App\Services\MarginalitaService;
+use App\Traits\EmitsActionCompleted;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
 class DettaglioCommessa extends Component
 {
+    use EmitsActionCompleted;
     public Commessa $commessa;
     public string $tabAttiva = 'lavorazioni';
     public array $marginalita = [];
@@ -144,7 +146,7 @@ class DettaglioCommessa extends Component
             return;
         }
 
-        app(AggiornaStatoAction::class)->execute(
+        $activityId = app(AggiornaStatoAction::class)->execute(
             $this->commessa,
             $nuovoStato,
             auth()->user(),
@@ -157,6 +159,7 @@ class DettaglioCommessa extends Component
         $this->showTransizioneModal = false;
         $this->statoTarget = null;
         session()->flash('success', "Stato aggiornato: {$nuovoStato->label()}");
+        $this->emitActionCompleted("OdL {$this->commessa->numero} → {$nuovoStato->label()}", $activityId);
     }
 
     #[On('scadenze-suggerite')]

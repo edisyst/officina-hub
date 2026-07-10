@@ -6,12 +6,13 @@ use App\Actions\Magazzino\CaricoManualeAction;
 use App\Actions\Magazzino\RettificaInventarioAction;
 use App\Enums\TipoMovimento;
 use App\Models\Articolo;
+use App\Traits\EmitsActionCompleted;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class DettaglioArticolo extends Component
 {
-    use WithPagination;
+    use WithPagination, EmitsActionCompleted;
 
     public Articolo $articolo;
 
@@ -58,7 +59,7 @@ class DettaglioArticolo extends Component
 
         $this->authorize('movimenta', $this->articolo);
 
-        app(CaricoManualeAction::class)->execute(
+        $movimento = app(CaricoManualeAction::class)->execute(
             articolo: $this->articolo,
             tipo: TipoMovimento::from($this->caricoTipo),
             quantita: $this->caricoQuantita,
@@ -71,6 +72,9 @@ class DettaglioArticolo extends Component
 
         $this->articolo->refresh();
         $this->showCaricoModal = false;
+        $tipo = TipoMovimento::from($this->caricoTipo);
+        $activityId = $this->markLastActivityUndoable($movimento);
+        $this->emitActionCompleted("{$tipo->label()}: {$this->caricoQuantita}× {$this->articolo->descrizione}", $activityId);
         session()->flash('success', 'Movimento registrato.');
     }
 

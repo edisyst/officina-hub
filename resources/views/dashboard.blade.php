@@ -97,4 +97,23 @@
       </div>
     </div>
   </div>
+
+  @hasanyrole('admin|accettatore')
+  <div class="row mt-3">
+    <div class="col-12">
+      <div class="card card-outline card-info">
+        <div class="card-header">
+          <h3 class="card-title"><i class="fas fa-stream mr-2"></i>Ultime attività</h3>
+          <div class="card-tools">
+            <a href="{{ route('activity.index') }}" class="btn btn-sm btn-info">Vedi tutto</a>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <livewire:activity.feed-widget />
+        </div>
+      </div>
+    </div>
+  </div>
+  @endhasanyrole
+
 </x-app-layout>

@@ -1,5 +1,17 @@
 # Route per modulo
 
+## Step 34 — Undo operativo e activity feed
+
+```
+GET  /activity   → activity.index   (admin|accettatore)
+     Livewire Activity\Feed — feed paginato con filtri, pulsante Annulla
+```
+
+UndoToast è un Livewire component nel layout (nessuna route dedicata).
+Undo concorrente bloccato via `lockForUpdate()` in transazione DB.
+
+---
+
 ## Step 33 — Suggerimenti contestuali da storico veicolo
 ```
 GET  /impostazioni/manutenzioni   → impostazioni.manutenzioni   (admin)

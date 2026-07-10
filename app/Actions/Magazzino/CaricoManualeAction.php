@@ -7,6 +7,7 @@ use App\Models\Articolo;
 use App\Models\MovimentoMagazzino;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Spatie\Activitylog\Models\Activity;
 
 class CaricoManualeAction
 {
@@ -35,7 +36,7 @@ class CaricoManualeAction
 
             $articolo->update(['giacenza_attuale' => $giacenzaSuccessiva]);
 
-            return MovimentoMagazzino::create([
+            $movimento = MovimentoMagazzino::create([
                 'articolo_id'        => $articolo->id,
                 'tipo'               => $tipo,
                 'quantita'           => $quantita,
@@ -48,6 +49,21 @@ class CaricoManualeAction
                 'note'               => $note,
                 'created_at'         => now(),
             ]);
+
+            // Movimenti di storno non sono annullabili
+            if (! str_starts_with((string) $note, 'Storno movimento #')) {
+                $activity = Activity::where('subject_type', MovimentoMagazzino::class)
+                    ->where('subject_id', $movimento->id)
+                    ->latest('id')
+                    ->first();
+
+                if ($activity && ! isset($activity->properties['undoable'])) {
+                    $activity->properties = $activity->properties->merge(['undoable' => true]);
+                    $activity->save();
+                }
+            }
+
+            return $movimento;
         });
     }
 }

@@ -56,6 +56,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/analytics/dashboard', fn() => view('analytics.dashboard'))
         ->name('analytics.dashboard');
 
+    // Activity feed
+    Route::get('/activity', \App\Livewire\Activity\Feed::class)
+        ->middleware('role:admin|accettatore')
+        ->name('activity.index');
+
     // Clienti — accesso limitato ai ruoli con viewAny
     Route::get('/clienti', fn() => view('clienti.index'))
         ->middleware('can:viewAny,App\Models\Cliente')

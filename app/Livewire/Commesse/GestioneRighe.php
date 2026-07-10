@@ -14,11 +14,13 @@ use App\Models\Setting;
 use App\Models\TariffaManodopera;
 use App\Models\TariffaOraria;
 use App\Services\Pricing\MatricePrezzoService;
+use App\Traits\EmitsActionCompleted;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 
 class GestioneRighe extends Component
 {
+    use EmitsActionCompleted;
     public Commessa $commessa;
     public bool $showModal = false;
     public ?int $editingId = null;
@@ -270,7 +272,23 @@ class GestioneRighe extends Component
             CommessaRiga::findOrFail($this->editingId)->update($dati);
         } else {
             $ordinamento = $this->commessa->righe()->max('ordinamento') + 1;
-            $this->commessa->righe()->create(array_merge($dati, ['ordinamento' => $ordinamento]));
+            $riga = $this->commessa->righe()->create(array_merge($dati, ['ordinamento' => $ordinamento]));
+
+            $activityId = activity('commessa_riga')
+                ->causedBy(auth()->user())
+                ->performedOn($riga)
+                ->withProperties([
+                    'commessa_id'      => $this->commessa->id,
+                    'commessa_numero'  => $this->commessa->numero,
+                    'descrizione'      => $riga->descrizione,
+                    'quantita'         => (float) $riga->quantita,
+                    'undoable'         => true,
+                ])
+                ->event('created')
+                ->log('riga_aggiunta')
+                ->id;
+
+            $this->emitActionCompleted("Riga aggiunta: {$riga->descrizione}", $activityId);
         }
 
         $this->showModal = false;

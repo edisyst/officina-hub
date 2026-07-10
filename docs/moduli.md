@@ -4,6 +4,30 @@ Panoramica di tutte le aree applicative, con route principali e note operative.
 
 ---
 
+## Undo operativo e Activity Feed (Step 34)
+
+Feed attività leggibile in italiano con annullamento entro 10 minuti (configurabile).
+
+**Route:** `GET /activity` (admin|accettatore) — feed paginato con filtri.  
+**Toast:** componente Livewire `UndoToast` nel layout principale, countdown + pulsante Annulla.
+
+### Registry undo (config/undo.php)
+- `StockMovementUndoHandler` — carico/scarico → storno opposto via `CaricoManualeAction`
+- `WorkOrderStatusUndoHandler` — ripristina stato precedente solo se transizione inversa ammessa
+- `WorkOrderPartUndoHandler` — elimina riga OdL aggiunta per errore
+
+### Regole
+- Finestra configurabile: `UNDO_WINDOW_MINUTES` (default 10).
+- Solo autore o utenti con ruolo `admin` possono annullare.
+- Doppio undo bloccato via `lockForUpdate()` nella transazione.
+- Le activity di compensazione **non** sono annullabili.
+- Giacenza sempre coerente: compensazioni via stesso Action esistente, mai update nudi.
+
+### ActivityFeedService
+Mapping (log_name / event / subject_type) → frase italiana. Fallback generico per voci non mappate.
+
+---
+
 ## Suggerimenti contestuali da storico veicolo (Step 33)
 
 Pannello "Da valutare" nell'OdL: ricorda al banco i lavori declinati in passato, le scadenze imminenti e le manutenzioni per chilometraggio. Motore delle "opportunità mancate" basato interamente su dati interni (zero API esterne).

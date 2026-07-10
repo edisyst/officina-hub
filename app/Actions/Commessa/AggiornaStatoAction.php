@@ -12,12 +12,13 @@ use App\Models\User;
 use App\Services\EmailTemplateService;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
+use Spatie\Activitylog\Models\Activity;
 
 class AggiornaStatoAction
 {
     public function __construct(private EmailTemplateService $templateService) {}
 
-    public function execute(Commessa $commessa, StatoCommessa $nuovoStato, User $utente, ?string $nota = null): void
+    public function execute(Commessa $commessa, StatoCommessa $nuovoStato, User $utente, ?string $nota = null): ?int
     {
         if (! $commessa->puoTransireA($nuovoStato)) {
             throw ValidationException::withMessages([
@@ -45,6 +46,23 @@ class AggiornaStatoAction
         ]);
 
         $this->accodaEmailSeNecessario($commessa, $nuovoStato);
+
+        // Solo annullamenti espliciti non ricevono undoable
+        if ($nota !== 'Annullamento automatico') {
+            $activity = Activity::where('subject_type', Commessa::class)
+                ->where('subject_id', $commessa->id)
+                ->latest('id')
+                ->first();
+
+            if ($activity && ! isset($activity->properties['undoable'])) {
+                $activity->properties = $activity->properties->merge(['undoable' => true]);
+                $activity->save();
+            }
+
+            return $activity?->id;
+        }
+
+        return null;
     }
 
     private function accodaEmailSeNecessario(Commessa $commessa, StatoCommessa $nuovoStato): void

@@ -502,6 +502,15 @@
           </li>
           @endhasanyrole
 
+          @hasanyrole('admin|accettatore')
+          <li class="nav-item">
+            <a href="{{ route('activity.index') }}" class="nav-link {{ request()->routeIs('activity.*') ? 'active' : '' }}">
+              <i class="nav-icon fas fa-stream"></i>
+              <p>Attività</p>
+            </a>
+          </li>
+          @endhasanyrole
+
           @role('admin')
           <li class="nav-item has-treeview {{ request()->routeIs('settings.*') || request()->routeIs('impostazioni.*') ? 'menu-open' : '' }}">
             <a href="#" class="nav-link {{ request()->routeIs('settings.*') || request()->routeIs('impostazioni.*') ? 'active' : '' }}">
@@ -635,6 +644,7 @@
 @vite(['resources/js/app.js'])
 
 @livewire('command-palette')
+@livewire('undo-toast')
 @livewireScripts
 <script>
 document.addEventListener('keydown', function(e) {

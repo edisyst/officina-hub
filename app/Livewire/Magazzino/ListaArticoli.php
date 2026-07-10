@@ -12,6 +12,7 @@ use App\Livewire\Concerns\WithBulkSelection;
 use App\Models\Articolo;
 use App\Models\CategoriaArticolo;
 use App\Models\Fornitore;
+use App\Traits\EmitsActionCompleted;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
@@ -20,7 +21,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ListaArticoli extends Component
 {
-    use WithPagination, WithBulkSelection;
+    use WithPagination, WithBulkSelection, EmitsActionCompleted;
 
     public string $search = '';
     public string $filtroCategoria = '';
@@ -399,7 +400,7 @@ class ListaArticoli extends Component
         $articolo = Articolo::findOrFail($this->caricoArticoloId);
         $this->authorize('movimenta', $articolo);
 
-        app(CaricoManualeAction::class)->execute(
+        $movimento = app(CaricoManualeAction::class)->execute(
             articolo: $articolo,
             tipo: TipoMovimento::from($this->caricoTipo),
             quantita: $this->caricoQuantita,
@@ -410,6 +411,9 @@ class ListaArticoli extends Component
             note: $this->caricoNote ?: null,
         );
 
+        $tipo = TipoMovimento::from($this->caricoTipo);
+        $activityId = $this->markLastActivityUndoable($movimento);
+        $this->emitActionCompleted("{$tipo->label()}: {$this->caricoQuantita}× {$articolo->descrizione}", $activityId);
         session()->flash('success', 'Movimento registrato. Giacenza aggiornata.');
         $this->showCaricoModal = false;
     }
