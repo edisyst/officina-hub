@@ -9,6 +9,7 @@ use App\Actions\Parts\BulkUpdateLocationAction;
 use App\Enums\TipoMovimento;
 use App\Enums\UnitaMisura;
 use App\Livewire\Concerns\WithBulkSelection;
+use App\Livewire\Concerns\WithSavedFilters;
 use App\Models\Articolo;
 use App\Models\CategoriaArticolo;
 use App\Models\Fornitore;
@@ -21,7 +22,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ListaArticoli extends Component
 {
-    use WithPagination, WithBulkSelection, EmitsActionCompleted;
+    use WithPagination, WithBulkSelection, EmitsActionCompleted, WithSavedFilters;
+
+    protected string $pageKey = 'magazzino.articoli';
+    protected array $filterWhitelist = ['search', 'filtroCategoria', 'filtroFornitore', 'soloSottoScorta'];
 
     public string $search = '';
     public string $filtroCategoria = '';
@@ -178,6 +182,11 @@ class ListaArticoli extends Component
         $this->bulkReport     = $result;
         $this->showBulkReport = true;
         $this->deselectAll();
+    }
+
+    public function mount(): void
+    {
+        $this->initSavedFilters();
     }
 
     public function apriBulkUbicazioneModal(): void

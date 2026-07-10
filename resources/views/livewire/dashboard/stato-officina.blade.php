@@ -1,6 +1,45 @@
 <div>
   @auth
-  @php $user = auth()->user(); @endphp
+  @php
+    $user = auth()->user();
+    $recentItems = app(\App\Services\Workspace\RecentItemsService::class)->recent($user, 6);
+    $userShortcuts = \App\Models\UserShortcut::where('user_id', $user->id)->orderBy('position')->get();
+  @endphp
+
+  {{-- Widget Riprendi da dove eri --}}
+  @if($recentItems->isNotEmpty() || $userShortcuts->isNotEmpty())
+  <div class="card card-outline card-primary mb-3">
+    <div class="card-header">
+      <h3 class="card-title"><i class="fas fa-history mr-2"></i>Riprendi da dove eri</h3>
+    </div>
+    <div class="card-body">
+      @if($recentItems->isNotEmpty())
+      <div class="row">
+        @foreach($recentItems as $r)
+        <div class="col-md-4 col-sm-6 mb-2">
+          <a href="{{ $r['url'] }}" class="btn btn-outline-secondary btn-sm btn-block text-left d-flex align-items-center" style="overflow:hidden">
+            <i class="{{ $r['icon'] }} mr-2 text-muted" style="min-width:14px"></i>
+            <span class="text-truncate flex-grow-1">{{ $r['label'] }}</span>
+            <small class="text-muted ml-1 text-nowrap">{{ $r['last_visited_at']->diffForHumans(short: true) }}</small>
+          </a>
+        </div>
+        @endforeach
+      </div>
+      @endif
+
+      @if($userShortcuts->isNotEmpty())
+      <hr class="my-2">
+      <div class="d-flex flex-wrap" style="gap:.35rem">
+        @foreach($userShortcuts as $sc)
+        <a href="{{ $sc->url }}" class="btn btn-sm btn-warning">
+          <i class="{{ $sc->icon ?? 'fas fa-star' }} mr-1"></i>{{ $sc->label }}
+        </a>
+        @endforeach
+      </div>
+      @endif
+    </div>
+  </div>
+  @endif
 
   <!-- Admin / Accettatore -->
   @if($user->hasAnyRole(['admin', 'accettatore']))

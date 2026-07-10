@@ -48,6 +48,38 @@
           <span class="d-none d-md-inline ml-1" style="font-size:12px;opacity:.6">Ctrl+K</span>
         </button>
       </li>
+
+      {{-- Recenti --}}
+      @auth
+      <li class="nav-item dropdown">
+        <a class="nav-link" data-toggle="dropdown" href="#" title="Recenti">
+          <i class="fas fa-history"></i>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right" style="min-width:280px">
+          <span class="dropdown-header">Visitati di recente</span>
+          @php
+            $recenti = auth()->check()
+              ? app(\App\Services\Workspace\RecentItemsService::class)->recent(auth()->user(), 10)
+              : collect();
+          @endphp
+          @forelse($recenti as $r)
+          <a class="dropdown-item d-flex align-items-center" href="{{ $r['url'] }}">
+            <i class="{{ $r['icon'] }} mr-2 text-muted" style="width:14px"></i>
+            <span class="flex-grow-1 text-truncate" style="max-width:200px">{{ $r['label'] }}</span>
+            <small class="text-muted ml-2">{{ $r['last_visited_at']->diffForHumans(short: true) }}</small>
+          </a>
+          @empty
+          <span class="dropdown-item text-muted small">Nessun elemento visitato</span>
+          @endforelse
+        </div>
+      </li>
+
+      {{-- Preferiti star --}}
+      <li class="nav-item position-relative">
+        @livewire('workspace.workspace-bar', ['url' => request()->url(), 'title' => $title ?? ''])
+      </li>
+      @endauth
+
       <li class="nav-item dropdown">
         <a class="nav-link" data-toggle="dropdown" href="#">
           <i class="far fa-user"></i>
@@ -55,6 +87,10 @@
           <span class="badge badge-secondary ml-1">{{ Auth::user()->getRoleNames()->first() }}</span>
         </a>
         <div class="dropdown-menu dropdown-menu-right">
+          <a href="{{ route('workspace.shortcuts') }}" class="dropdown-item">
+            <i class="fas fa-star mr-2 text-warning"></i> Le mie scorciatoie
+          </a>
+          <div class="dropdown-divider"></div>
           <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit" class="dropdown-item">

@@ -4,6 +4,7 @@ namespace App\Livewire\Clienti;
 
 use App\Enums\SegmentoCrm;
 use App\Enums\TipoCliente;
+use App\Livewire\Concerns\WithSavedFilters;
 use App\Models\Cliente;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
@@ -11,7 +12,14 @@ use Livewire\WithPagination;
 
 class ListaClienti extends Component
 {
-    use WithPagination;
+    use WithPagination, WithSavedFilters;
+
+    protected string $pageKey = 'clienti.index';
+    protected array $filterWhitelist = [
+        'search', 'filtroSegmento', 'filtroConsenso',
+        'filtroValoreMin', 'filtroValoreMax',
+        'filtroUltimaVisitaDa', 'filtroUltimaVisitaA',
+    ];
 
     public string $search            = '';
     public string $filtroSegmento    = '';
@@ -62,6 +70,11 @@ class ListaClienti extends Component
 
     #[Rule('nullable|string')]
     public ?string $note = null;
+
+    public function mount(): void
+    {
+        $this->initSavedFilters();
+    }
 
     public function updatingSearch(): void { $this->resetPage(); }
     public function updatingFiltroSegmento(): void { $this->resetPage(); }

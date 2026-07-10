@@ -3,6 +3,7 @@
 namespace App\Livewire\Clienti;
 
 use App\Enums\TipoCrmNota;
+use App\Livewire\Concerns\TracksRecentView;
 use App\Models\Cliente;
 use App\Models\CrmNota;
 use App\Models\Veicolo;
@@ -11,6 +12,7 @@ use Livewire\Component;
 
 class DettaglioCliente extends Component
 {
+    use TracksRecentView;
     public Cliente $cliente;
     public string $searchVeicolo = '';
     public bool $showAssociaModal = false;
@@ -25,6 +27,8 @@ class DettaglioCliente extends Component
     {
         $this->cliente          = Cliente::withTrashed()->findOrFail($clienteId);
         $this->consensoMarketing = (bool) $this->cliente->consenso_marketing;
+
+        $this->trackRecentView($this->cliente);
     }
 
     public function dissocia(int $veicoloId): void

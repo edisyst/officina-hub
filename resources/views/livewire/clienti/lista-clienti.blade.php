@@ -31,6 +31,9 @@
         @endrole
       </div>
     </div>
+    <div class="card-body py-2 px-3">
+      @include('livewire.workspace._saved-filters-bar')
+    </div>
     <div class="card-body p-0">
       <table class="table table-hover table-sm mb-0">
         <thead class="thead-light">

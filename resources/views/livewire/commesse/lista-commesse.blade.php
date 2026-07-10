@@ -49,6 +49,8 @@
     </div>
   </div>
 
+  @include('livewire.workspace._saved-filters-bar')
+
   <!-- Barra azioni bulk (visibile solo con selezione attiva) -->
   @if($vista === 'tabella' && (count($selectedIds) > 0 || $selectAll))
   <div class="alert alert-info py-2 mb-3 d-flex align-items-center" style="gap:8px">

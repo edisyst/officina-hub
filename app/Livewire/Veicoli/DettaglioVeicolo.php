@@ -2,17 +2,21 @@
 
 namespace App\Livewire\Veicoli;
 
+use App\Livewire\Concerns\TracksRecentView;
 use App\Models\Veicolo;
 use Livewire\Component;
 
 class DettaglioVeicolo extends Component
 {
+    use TracksRecentView;
     public Veicolo $veicolo;
     public string $tabAttiva = 'storico';
 
     public function mount(int $veicoloId): void
     {
         $this->veicolo = Veicolo::withTrashed()->findOrFail($veicoloId);
+
+        $this->trackRecentView($this->veicolo);
     }
 
     public function render()

@@ -5,6 +5,7 @@ namespace App\Livewire\Magazzino;
 use App\Actions\Magazzino\CaricoManualeAction;
 use App\Actions\Magazzino\RettificaInventarioAction;
 use App\Enums\TipoMovimento;
+use App\Livewire\Concerns\TracksRecentView;
 use App\Models\Articolo;
 use App\Traits\EmitsActionCompleted;
 use Livewire\Component;
@@ -12,7 +13,7 @@ use Livewire\WithPagination;
 
 class DettaglioArticolo extends Component
 {
-    use WithPagination, EmitsActionCompleted;
+    use WithPagination, EmitsActionCompleted, TracksRecentView;
 
     public Articolo $articolo;
 
@@ -33,6 +34,8 @@ class DettaglioArticolo extends Component
     public function mount(int $articoloId): void
     {
         $this->articolo = Articolo::with(['categoria', 'fornitore'])->findOrFail($articoloId);
+
+        $this->trackRecentView($this->articolo);
     }
 
     public function apriCaricoModal(string $tipo = 'carico'): void

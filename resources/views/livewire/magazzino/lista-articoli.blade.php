@@ -69,6 +69,8 @@
   </div>
   @endif
 
+  @include('livewire.workspace._saved-filters-bar')
+
   <!-- Tabella -->
   <div class="card">
     <div class="card-body p-0">

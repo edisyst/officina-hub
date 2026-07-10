@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             PricingSeeder::class,
             CommunicationSeeder::class,
             RecommendationSeeder::class,
+            WorkspaceSeeder::class,
         ]);
     }
 }

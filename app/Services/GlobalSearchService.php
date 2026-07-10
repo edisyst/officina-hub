@@ -5,7 +5,10 @@ namespace App\Services;
 use App\Models\Articolo;
 use App\Models\Cliente;
 use App\Models\Commessa;
+use App\Models\User;
+use App\Models\UserShortcut;
 use App\Models\Veicolo;
+use App\Services\Workspace\RecentItemsService;
 use Illuminate\Support\Facades\DB;
 
 class GlobalSearchService
@@ -204,6 +207,49 @@ class GlobalSearchService
                 ],
             ])->toArray(),
         ];
+    }
+
+    /** Suggestions shown in palette when query is empty: recent items + shortcuts */
+    public function suggestions(User $user, int $limit = 8): array
+    {
+        $recenti = app(RecentItemsService::class)->recent($user, $limit);
+
+        $shortcuts = UserShortcut::where('user_id', $user->id)
+            ->orderBy('position')
+            ->limit(6)
+            ->get();
+
+        $result = [];
+
+        if ($recenti->isNotEmpty()) {
+            $result[] = [
+                'tipo'  => 'recenti',
+                'label' => 'Visitati di recente',
+                'icon'  => 'fas fa-history',
+                'items' => $recenti->map(fn ($r) => [
+                    'label'       => $r['label'],
+                    'secondary'   => $r['last_visited_at']->diffForHumans(),
+                    'url'         => $r['url'],
+                    'quick_actions' => [],
+                ])->toArray(),
+            ];
+        }
+
+        if ($shortcuts->isNotEmpty()) {
+            $result[] = [
+                'tipo'  => 'scorciatoie',
+                'label' => 'Le mie scorciatoie',
+                'icon'  => 'fas fa-star',
+                'items' => $shortcuts->map(fn ($sc) => [
+                    'label'       => $sc->label,
+                    'secondary'   => '',
+                    'url'         => $sc->url,
+                    'quick_actions' => [],
+                ])->toArray(),
+            ];
+        }
+
+        return $result;
     }
 
     private function booleanTerm(string $query): string

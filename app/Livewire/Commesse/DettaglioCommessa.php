@@ -14,13 +14,14 @@ use App\Models\Documento;
 use App\DataTransferObjects\CommessaMargins;
 use App\Services\Commesse\MarginCalculatorService;
 use App\Services\MarginalitaService;
+use App\Livewire\Concerns\TracksRecentView;
 use App\Traits\EmitsActionCompleted;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
 class DettaglioCommessa extends Component
 {
-    use EmitsActionCompleted;
+    use EmitsActionCompleted, TracksRecentView;
     public Commessa $commessa;
     public string $tabAttiva = 'lavorazioni';
     public array $marginalita = [];
@@ -59,6 +60,8 @@ class DettaglioCommessa extends Component
     {
         $this->commessa = Commessa::with(['cliente', 'veicolo', 'user', 'righe', 'allegati', 'log.user'])
             ->findOrFail($commessaId);
+
+        $this->trackRecentView($this->commessa);
 
         if (auth()->user()->hasAnyRole(['admin', 'cassa'])) {
             $this->marginalita = app(MarginalitaService::class)->calcola($this->commessa);

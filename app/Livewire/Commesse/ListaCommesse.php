@@ -6,6 +6,7 @@ use App\Actions\WorkOrders\BulkChangeWorkOrderStatusAction;
 use App\Enums\StatoCommessa;
 use App\Enums\TipoCommessa;
 use App\Livewire\Concerns\WithBulkSelection;
+use App\Livewire\Concerns\WithSavedFilters;
 use App\Models\Commessa;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
@@ -15,7 +16,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ListaCommesse extends Component
 {
-    use WithPagination, WithBulkSelection;
+    use WithPagination, WithBulkSelection, WithSavedFilters;
+
+    protected string $pageKey = 'work-orders.index';
+    protected array $filterWhitelist = ['search', 'filtroStato', 'filtroTipo'];
 
     public string $search = '';
     public string $filtroStato = '';
@@ -36,6 +40,8 @@ class ListaCommesse extends Component
         if (session('commesse_vista') === 'board') {
             $this->redirect(route('commesse.board'));
         }
+
+        $this->initSavedFilters();
     }
 
     public function updatingSearch(): void

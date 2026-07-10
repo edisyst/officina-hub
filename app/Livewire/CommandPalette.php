@@ -20,16 +20,22 @@ class CommandPalette extends Component
 
     public function updatedQuery(): void
     {
-        $this->results = $this->query !== ''
-            ? $this->searchService->search($this->query)
-            : [];
+        if ($this->query !== '') {
+            $this->results = $this->searchService->search($this->query);
+        } elseif (auth()->check()) {
+            $this->results = $this->searchService->suggestions(auth()->user());
+        } else {
+            $this->results = [];
+        }
     }
 
     public function openPalette(): void
     {
         $this->open = true;
         $this->query = '';
-        $this->results = [];
+        $this->results = auth()->check()
+            ? $this->searchService->suggestions(auth()->user())
+            : [];
     }
 
     public function closePalette(): void
